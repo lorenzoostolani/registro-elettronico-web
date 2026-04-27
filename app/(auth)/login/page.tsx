@@ -32,7 +32,7 @@ export default function LoginPage() {
     setLoading(false)
 
     if (!response.ok) {
-      setError(data.error ?? 'Errore login')
+      setError(data.error ?? `Errore login (${response.status})`)
       return
     }
 

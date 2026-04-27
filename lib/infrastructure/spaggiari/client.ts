@@ -1,5 +1,17 @@
 const BASE_URL = 'https://web.spaggiari.eu/rest/v1'
 
+export class SpaggiariApiError extends Error {
+  status: number
+  details?: unknown
+
+  constructor(status: number, message: string, details?: unknown) {
+    super(message)
+    this.name = 'SpaggiariApiError'
+    this.status = status
+    this.details = details
+  }
+}
+
 function baseHeaders(token?: string): HeadersInit {
   return {
     'Content-Type': 'application/json',
@@ -21,7 +33,21 @@ export async function spaggiariFetch<T>(path: string, init?: RequestInit, token?
   })
 
   if (!response.ok) {
-    throw new Error(`Spaggiari API error: ${response.status}`)
+    const raw = await response.text()
+    let details: unknown = raw
+    let message = `Spaggiari API error (${response.status})`
+
+    try {
+      const parsed = JSON.parse(raw) as { message?: string; error?: string; title?: string }
+      details = parsed
+      message = parsed.message ?? parsed.error ?? parsed.title ?? message
+    } catch {
+      if (raw) {
+        message = raw
+      }
+    }
+
+    throw new SpaggiariApiError(response.status, message, details)
   }
 
   return response.json() as Promise<T>

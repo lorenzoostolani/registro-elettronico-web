@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { extractStudentId } from '@/lib/domain/grades/entities'
 import { loginToSpaggiari } from '@/lib/infrastructure/spaggiari/repository'
+import { SpaggiariApiError } from '@/lib/infrastructure/spaggiari/client'
 import { apiError } from '@/lib/utils/api-response'
 
 export async function POST(request: NextRequest) {
@@ -29,7 +30,15 @@ export async function POST(request: NextRequest) {
     })
 
     return res
-  } catch {
-    return apiError('Credenziali non valide', 401)
+  } catch (error) {
+    if (error instanceof SpaggiariApiError) {
+      if (error.status === 401) {
+        return apiError('Credenziali non valide', 401)
+      }
+
+      return apiError(`Errore login Spaggiari (${error.status}): ${error.message}`, error.status)
+    }
+
+    return apiError('Errore imprevisto durante il login', 500)
   }
 }
