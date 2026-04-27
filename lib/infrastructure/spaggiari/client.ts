@@ -24,7 +24,7 @@ export async function spaggiariFetch<T>(path: string, init?: RequestInit, token?
   if (token) headers['z-auth-token'] = token
 
   const { statusCode, body } = await request(`${BASE_URL}${path}`, {
-    method: (init?.method as any) ?? 'GET',
+    method: (init?.method as 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH') ?? 'GET',
     headers,
     body: init?.body as string | undefined,
   })
