@@ -23,21 +23,34 @@ export default function LoginPage() {
   const login = async (ident?: string) => {
     setLoading(true)
     setError(null)
-    const response = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ uid, pass, ident })
-    })
-    const data = await response.json()
-    setLoading(false)
+    let response: Response
+    let data: Record<string, unknown> = {}
 
-    if (!response.ok) {
-      setError(data.error ?? `Errore login (${response.status})`)
+    try {
+      response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ uid, pass, ident })
+      })
+
+      const raw = await response.text()
+      data = raw ? (JSON.parse(raw) as Record<string, unknown>) : {}
+    } catch {
+      setLoading(false)
+      setError('Errore di rete o risposta non valida dal server')
       return
     }
 
-    if (data.choices) {
-      setChoices(data.choices)
+    setLoading(false)
+
+    if (!response.ok) {
+      const maybeError = typeof data.error === 'string' ? data.error : null
+      setError(maybeError ?? `Errore login (${response.status})`)
+      return
+    }
+
+    if (Array.isArray(data.choices)) {
+      setChoices(data.choices as ParentChoice[])
       return
     }
 

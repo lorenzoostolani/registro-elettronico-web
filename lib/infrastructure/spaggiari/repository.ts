@@ -1,5 +1,6 @@
 import { Grade } from '@/lib/domain/grades/entities'
 import { spaggiariFetch } from './client'
+export { SpaggiariApiError } from './client'
 
 export interface LoginRequest {
   uid: string
