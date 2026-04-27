@@ -3,12 +3,14 @@ import { API_CONFIG } from '@/core/api/apiConfig';
 
 export const runtime = 'edge';
 
-export async function GET(req: NextRequest, { params }: { params: { path: string[] } }) {
-  return proxyRequest(req, params.path);
+export async function GET(req: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
+  const { path } = await params;
+  return proxyRequest(req, path);
 }
 
-export async function POST(req: NextRequest, { params }: { params: { path: string[] } }) {
-  return proxyRequest(req, params.path);
+export async function POST(req: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
+  const { path } = await params;
+  return proxyRequest(req, path);
 }
 
 async function proxyRequest(req: NextRequest, pathSegments: string[]) {
