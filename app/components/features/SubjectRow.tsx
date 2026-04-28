@@ -7,16 +7,18 @@ export function SubjectRow({
   subjectId,
   subjectDesc,
   average,
+  period,
   needed,
 }: {
   subjectId: number
   subjectDesc: string
   average: number | null
+  period?: number | null
   averageVariant: 'green' | 'amber' | 'red' | 'gray'
   needed: GradeNeededMessage
 }) {
   return (
-    <Link href={`/voti/${subjectId}`} style={{ textDecoration: 'none' }}>
+    <Link href={period != null ? `/voti/${subjectId}?period=${period}` : `/voti/${subjectId}`} style={{ textDecoration: 'none' }}>
       <div style={{
         background: 'var(--surface)',
         border: '1px solid var(--border)',

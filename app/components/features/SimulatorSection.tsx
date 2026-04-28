@@ -55,7 +55,7 @@ export function SimulatorSection({
           <p style={{ margin: '0 0 10px', fontSize: '12px', color: 'var(--text-2)', fontWeight: 500 }}>
             Aggiungi un voto simulato
           </p>
-          <div style={{ display: 'grid', gap: '8px', gridTemplateColumns: '1fr 1fr auto' }}>
+          <div className="simulator-form-grid" style={{ display: 'grid', gap: '8px', gridTemplateColumns: '1fr 1fr auto' }}>
             <input type="number" min={1} max={10} step={0.25} value={value} onChange={e => setValue(e.target.value)} style={inputStyle} />
             <select value={type} onChange={e => setType(e.target.value as GradeType)} style={inputStyle}>
               <option value="Scritto">Scritto</option>
@@ -110,7 +110,7 @@ export function SimulatorSection({
                           const next = Number(event.target.value)
                           if (!Number.isNaN(next) && next >= 1 && next <= 300) updateGrade(grade.id, { weightPercent: next })
                         }}
-                        style={{ ...inputStyle, width: '68px', padding: '4px 6px' }}
+                        style={{ ...inputStyle, width: '64px', padding: '4px 6px' }}
                       />
                     </label>
                     <button onClick={() => removeGrade(grade.id)} style={removeStyle}>Rimuovi</button>
@@ -121,6 +121,14 @@ export function SimulatorSection({
           </div>
         )}
       </div>
+
+      <style>{`
+        @media (max-width: 540px) {
+          .simulator-form-grid {
+            grid-template-columns: 1fr;
+          }
+        }
+      `}</style>
     </div>
   )
 }

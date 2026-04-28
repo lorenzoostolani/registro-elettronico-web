@@ -98,6 +98,12 @@ export default function VotiPage() {
       })
   }, [grades, filteredGrades, period, periods, settings.generalAverageMode, settings.objective, settings.objectives, settings.sortAscending, settings.subjectAverageModes])
 
+  const selectedSubjectPeriod = useMemo(() => {
+    if (period === 'latest') return periods[0]?.[0] ?? null
+    if (period === 'general') return null
+    return period
+  }, [period, periods])
+
   const latestGrades = useMemo(() =>
     [...grades]
       .filter(isValidGrade)
@@ -167,6 +173,7 @@ export default function VotiPage() {
               subjectId={subject.subjectId}
               subjectDesc={subject.subjectDesc}
               average={subject.average}
+              period={selectedSubjectPeriod}
               averageVariant={subject.averageVariant}
               needed={subject.gradeNeeded}
             />

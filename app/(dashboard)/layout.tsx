@@ -23,7 +23,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         .dashboard-main {
           flex: 1;
           width: 100%;
+          max-width: 100%;
+          overflow-x: clip;
           padding: 24px 16px 90px; /* bottom clears mobile nav */
+          -webkit-overflow-scrolling: touch;
         }
         @media (min-width: 769px) { /* matches sidebar hide breakpoint */
           .dashboard-main {
