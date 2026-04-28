@@ -65,8 +65,15 @@ export function useSettings() {
   const actions = useMemo(
     () => ({
       setObjective: (objective: number) => updateSettings({ objective: clampObjective(objective) }),
-      setSubjectObjective: (subjectId: string, objective: number) =>
-        updateSettings({ objectives: { ...settings.objectives, [subjectId]: clampObjective(objective) } }),
+      setSubjectObjective: (subjectId: string, objective: number | null) => {
+        const nextObjectives = { ...settings.objectives }
+        if (objective === null) {
+          delete nextObjectives[subjectId]
+        } else {
+          nextObjectives[subjectId] = clampObjective(objective)
+        }
+        updateSettings({ objectives: nextObjectives })
+      },
       setSortAscending: (sortAscending: boolean) => updateSettings({ sortAscending }),
       setGeneralAverageMode: (generalAverageMode: GeneralAverageMode) => updateSettings({ generalAverageMode }),
       setSubjectAverageMode: (subjectId: string, mode: GeneralAverageMode) =>

@@ -53,7 +53,12 @@ export default function ImpostazioniPage() {
       const next: Record<string, string> = {}
       subjects.forEach(([subjectId]) => {
         const key = String(subjectId)
-        next[key] = prev[key] ?? String(settings.objectives[key] ?? settings.objective)
+        const hasSpecificObjective = settings.objectives[key] !== undefined
+        if (hasSpecificObjective) {
+          next[key] = prev[key] ?? String(settings.objectives[key])
+          return
+        }
+        next[key] = String(settings.objective)
       })
       return next
     })
@@ -73,7 +78,11 @@ export default function ImpostazioniPage() {
   const commitSubjectObjective = (subjectId: string) => {
     const parsed = parseObjectiveInput(subjectObjectiveDrafts[subjectId] ?? '')
     if (parsed !== null) {
-      actions.setSubjectObjective(subjectId, parsed)
+      if (parsed === settings.objective) {
+        actions.setSubjectObjective(subjectId, null)
+      } else {
+        actions.setSubjectObjective(subjectId, parsed)
+      }
       setSubjectObjectiveDrafts((prev) => ({ ...prev, [subjectId]: String(parsed) }))
       return
     }
