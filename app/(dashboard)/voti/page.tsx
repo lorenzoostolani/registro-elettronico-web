@@ -7,6 +7,7 @@ import { SubjectRow } from '@/app/components/features/SubjectRow'
 import { AverageCircle } from '@/app/components/features/AverageCircle'
 import { Grade, computeAverage, computeGradeNeeded, getAverageColorVsObjective, isValidGrade } from '@/lib/domain/grades/entities'
 import { useSettings } from '@/lib/hooks/useSettings'
+import { fetchGradesWithAuthGuard } from '@/lib/utils/auth-client'
 
 
 function formatPeriodLabel(desc: string, index: number): string {
@@ -25,9 +26,9 @@ export default function VotiPage() {
   const [period, setPeriod] = useState<number | 'latest' | 'general'>('latest')
 
   useEffect(() => {
-    fetch('/api/grades')
-      .then(r => r.json())
+    fetchGradesWithAuthGuard()
       .then(data => {
+        if (!data) return
         if (data.error) setError(data.error)
         else setGrades(data.grades)
       })

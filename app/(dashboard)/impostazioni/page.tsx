@@ -1,11 +1,13 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { PageHeader } from '@/app/components/ui/PageHeader'
 import { Card } from '@/app/components/ui/Card'
 import { LoadingSpinner } from '@/app/components/ui/LoadingSpinner'
 import { useSettings } from '@/lib/hooks/useSettings'
 import { Grade } from '@/lib/domain/grades/entities'
+import { fetchGradesWithAuthGuard } from '@/lib/utils/auth-client'
 
 function parseObjectiveInput(value: string): number | null {
   const normalized = value.replace(',', '.')
@@ -16,13 +18,21 @@ function parseObjectiveInput(value: string): number | null {
 }
 
 export default function ImpostazioniPage() {
+  const router = useRouter()
   const { settings, actions, ready } = useSettings()
   const [grades, setGrades] = useState<Grade[]>([])
 
+  async function handleLogout() {
+    await fetch('/api/auth/logout', { method: 'POST' })
+    router.push('/login')
+  }
+
   useEffect(() => {
-    fetch('/api/grades')
-      .then((res) => res.json())
-      .then((data) => setGrades(data.grades ?? []))
+    fetchGradesWithAuthGuard()
+      .then((data) => {
+        if (!data) return
+        setGrades(data.grades ?? [])
+      })
       .catch(() => setGrades([]))
   }, [])
 
@@ -149,6 +159,17 @@ export default function ImpostazioniPage() {
               <option key={y} value={y}>{y}ª superiore</option>
             ))}
           </select>
+        </Card>
+
+        <Card>
+          <h3 className="font-semibold">Account</h3>
+          <p className="mt-1 text-sm text-text2">Se vuoi cambiare utente, esegui il logout.</p>
+          <button
+            onClick={handleLogout}
+            className="mt-3 w-full rounded-lg border border-borderToken bg-surface2 px-3 py-2 text-sm font-semibold text-text"
+          >
+            Logout
+          </button>
         </Card>
       </div>
     </div>
