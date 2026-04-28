@@ -1,151 +1,120 @@
 # Registro Elettronico Web
 
-Applicazione web (Next.js + TypeScript) che mostra in modo chiaro i voti provenienti da **ClasseViva / Spaggiari**, con strumenti aggiuntivi per capire l’andamento scolastico e simulare i prossimi voti necessari per raggiungere un obiettivo.
+Registro Elettronico Web è un frontend moderno per **ClasseViva Spaggiari**, recupera i voti tramite API e li presenta in una UI più leggibile rispetto al registro classico, mostrando medie e statistiche dettagliate.
 
-> Progetto pensato per consultazione rapida da mobile/desktop, con dashboard focalizzata su medie, materie e progressi.
+![Next.js](https://img.shields.io/badge/Next.js_15-black?style=flat-square&logo=next.js)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white)
+![React](https://img.shields.io/badge/React_19-61DAFB?style=flat-square&logo=react&logoColor=black)
+![Vercel](https://img.shields.io/badge/Vercel-black?style=flat-square&logo=vercel)
 
----
-
-## Cos’è
-
-**Registro Elettronico Web** è un frontend moderno che si autentica con credenziali ClasseViva, recupera i voti tramite API e li presenta in una UI più leggibile rispetto al registro classico, mostrando medie e statistiche.
-
-L’app include:
-- vista “ultimi voti” e vista per periodi (quadrimestri / generale);
-- dettaglio materia con medie per tipologia (scritto/orale/pratico);
-- simulatore locale per “quanto devo prendere” e impatto sulla media;
-- impostazioni personalizzabili (obiettivi, ordinamento, metodo di media).
+👉 **[Apri la web app](https://registro-elettronico-web.vercel.app)**
 
 ---
 
-## A cosa serve
+<details>
+<summary><strong>Come funziona</strong></summary>
+<br>
 
-Serve a:
-- controllare velocemente la situazione scolastica;
-- avere una media più comprensibile (pesata o per tipologie);
-- impostare obiettivi globali e per singola materia;
-- capire quali voti futuri servono per raggiungere una soglia;
-- sperimentare scenari senza alterare dati ufficiali.
+**1. Autenticazione**
+L'utente inserisce le credenziali in `/login`. L'API interna `POST /api/auth/login` le inoltra a Spaggiari. Se è richiesta la selezione profilo (es. genitore), la UI mostra l'elenco e ripete il login con `ident`. In caso di successo vengono impostati cookie `httpOnly` di sessione con scadenza 4 ore.
 
----
+**2. Protezione rotte**
+Il middleware controlla il cookie `rv_token`. Se assente, redirige a `/login`. Se già autenticato, redirige direttamente a `/voti`.
 
-## Come funziona (architettura)
+**3. Recupero voti**
+Il client chiama `GET /api/grades`. La route legge token e studentId dalla sessione e recupera i dati da Spaggiari. In caso di sessione scaduta (401/403), l'API forza il logout e pulisce i cookie.
 
-### 1) Autenticazione
-1. L’utente inserisce codice utente/password in `/login`.
-2. L’API interna `POST /api/auth/login` inoltra la richiesta al repository Spaggiari.
-3. Se il provider richiede scelta profilo (genitore), la UI mostra l’elenco e rifà il login con `ident`.
-4. In caso di successo vengono impostati cookie httpOnly di sessione (`rv_token`, `rv_student_id`, `rv_ident`, `rv_profile`) con scadenza 4 ore.
+**4. Elaborazione dati**
+Le funzioni di dominio calcolano media pesata, media per tipologia (scritto/orale/pratico), stato colore rispetto all'obiettivo e voti necessari per raggiungerlo.
 
-### 2) Protezione rotte
-- Il middleware controlla il cookie `rv_token`.
-- Se non presente, redirige a `/login`.
-- Se già autenticato e si visita `/login`, redirige a `/voti`.
+**5. Simulazioni e preferenze locali**
+In `localStorage` vengono salvate impostazioni (`rv_settings`), voti simulati (`rv_local_grades`) e override dei pesi. Le simulazioni sono locali al browser e non modificano i dati ufficiali.
 
-### 3) Recupero voti
-- Il client chiama `GET /api/grades`.
-- La route server legge token+studentId dalla sessione e recupera i voti dal backend Spaggiari.
-- In caso di token scaduto (401/403), l’API forza logout e pulizia cookie.
-
-### 4) Elaborazione dati
-Le funzioni di dominio calcolano:
-- media pesata su tutti i voti;
-- media delle 3 medie (scritto/orale/pratico);
-- colore stato media rispetto a soglia/obiettivo;
-- voto/i necessari per raggiungere un obiettivo.
-
-### 5) Simulazioni e preferenze locali
-Su browser vengono salvati in `localStorage`:
-- impostazioni utente (`rv_settings`): obiettivo, ordinamento, modalità media, anno, ecc.;
-- voti simulati per materia/periodo (`rv_local_grades`);
-- override dei pesi voto nel dettaglio materia.
-
-> Le simulazioni sono locali al dispositivo/browser e **non** modificano i dati del registro ufficiale.
+</details>
 
 ---
 
-## Funzionalità principali
+<details>
+<summary><strong>Funzionalità</strong></summary>
+<br>
 
-- **Panoramica voti**: ultimi voti con card colorate e dettagli rapidi.
-- **Filtri periodo**: ultimi, singolo periodo (es. quadrimestre), generale.
-- **Elenco materie**: media, stato colore rispetto obiettivo, indicazione voto necessario.
-- **Dettaglio materia**:
-  - medie per Scritto/Orale/Pratico;
-  - barra progresso verso obiettivo;
-  - elenco voti con peso modificabile (solo locale);
-  - simulatore nuovi voti.
-- **Impostazioni avanzate**:
-  - obiettivo globale e obiettivi per materia;
-  - ordinamento materie crescente/decrescente;
-  - scelta metodo di media globale e per materia;
-  - anno scolastico;
-  - logout.
+| Funzionalità | Descrizione |
+|---|---|
+| **Panoramica voti** | Card colorate con ultimi voti e filtro per periodo (quadrimestre / generale) |
+| **Elenco materie** | Media per materia, stato colore rispetto all'obiettivo e voto necessario |
+| **Dettaglio materia** | Medie per scritto/orale/pratico, barra progresso, pesi modificabili e simulatore |
+| **Simulatore** | Calcola quale voto occorre per raggiungere un obiettivo, senza alterare i dati ufficiali |
+| **Impostazioni** | Obiettivi globali e per materia, ordinamento, metodo di media, anno scolastico e logout |
+| **Metodi di media** | Media pesata su tutti i voti oppure media delle medie per tipologia, configurabile per materia |
+
+</details>
 
 ---
 
-## Stack tecnologico
+<details>
+<summary><strong>Stack tecnologico</strong></summary>
+<br>
 
-- **Framework**: Next.js 15 (App Router)
-- **Linguaggio**: TypeScript
-- **UI**: React 19 + CSS/Tailwind utility
-- **Grafici/UI componenti**: Recharts, componenti custom
-- **Runtime/API**: Route Handlers Next.js (Node + alcune route Edge)
+| Ruolo | Tecnologia |
+|---|---|
+| Framework | Next.js 15 (App Router) |
+| Linguaggio | TypeScript |
+| UI | React 19 + Tailwind CSS |
+| Grafici | Recharts + componenti custom |
+| API runtime | Next.js Route Handlers (Node + Edge) |
+| Deploy | Vercel |
+
+</details>
 
 ---
 
-## Struttura del progetto
+<details>
+<summary><strong>Struttura del progetto</strong></summary>
+<br>
 
 ```text
 app/
-  (auth)/login/                 # pagina login
-  (dashboard)/voti/             # dashboard voti + dettaglio materia
-  (dashboard)/impostazioni/     # impostazioni utente
-  api/auth/*                    # login, logout, me
-  api/grades/                   # endpoint voti autenticato
-  api/proxy/[...path]/          # proxy generico verso API remote
+  (auth)/login/             # pagina di login
+  (dashboard)/voti/         # dashboard voti + dettaglio materia
+  (dashboard)/impostazioni/ # impostazioni utente
+  api/auth/                 # login, logout, me
+  api/grades/               # endpoint voti autenticato
+  api/proxy/[...path]/      # proxy verso API remote
 
 lib/
-  domain/grades/entities.ts     # tipi + logiche di calcolo medie/obiettivi
-  infrastructure/spaggiari/     # client API + repository
-  hooks/                        # stato locale (settings, simulazioni)
-  utils/                        # sessione, auth guard, utilità
+  domain/grades/entities.ts # tipi e logiche di calcolo
+  infrastructure/spaggiari/ # client API + repository
+  hooks/                    # stato locale (settings, simulazioni)
+  utils/                    # sessione, auth guard, utilità
 
-core/api/apiConfig.ts           # configurazione endpoint/header API
-middleware.ts                   # protezione accesso alle rotte
+core/
+  api/apiConfig.ts          # endpoint e header API
+
+middleware.ts               # protezione accesso alle rotte
 ```
+
+</details>
 
 ---
 
-## Avvio in locale
+<details>
+<summary><strong>Avvio in locale</strong></summary>
+<br>
 
-### Prerequisiti
-- Node.js 20+
-- npm
+**Prerequisiti:** Node.js 20+ e npm.
 
-### Installazione
 ```bash
+# Installazione dipendenze
 npm install
-```
 
-### Sviluppo
-```bash
+# Avvio in sviluppo
 npm run dev
 ```
-Apri [http://localhost:3000](http://localhost:3000).
+
+Apri [http://localhost:3000](http://localhost:3000) nel browser.
+
+</details>
 
 ---
 
-## Note importanti
-
-- L’app usa una sessione basata su cookie httpOnly lato server.
-- In produzione i cookie vengono marcati `secure`.
-- Se la sessione scade, il client viene reindirizzato al login automaticamente.
-- Le credenziali non vengono persistite in `localStorage`.
-- Le personalizzazioni utente (obiettivi/simulazioni) sono memorizzate solo in locale.
-
----
-
-
-## Licenza
-
-Se non diversamente specificato, tutti i diritti sono riservati al proprietario del repository.
+<sub>Tutti i diritti riservati al proprietario del repository.</sub>
