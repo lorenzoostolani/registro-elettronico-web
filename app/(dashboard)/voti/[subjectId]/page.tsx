@@ -10,6 +10,7 @@ import { SimulatorSection } from '@/app/components/features/SimulatorSection'
 import { Grade, GradeType, computeAverage, computeWeightedAverage, getGradeType } from '@/lib/domain/grades/entities'
 import { useSettings } from '@/lib/hooks/useSettings'
 import { useLocalGrades } from '@/lib/hooks/useLocalGrades'
+import { fetchGradesWithAuthGuard } from '@/lib/utils/auth-client'
 
 const WEIGHTS_KEY = 'rv_grade_weights'
 
@@ -25,9 +26,9 @@ export default function SubjectDetailPage() {
   const [weightOverrides, setWeightOverrides] = useState<Record<string, number>>({})
 
   useEffect(() => {
-    fetch('/api/grades')
-      .then(r => r.json())
+    fetchGradesWithAuthGuard()
       .then(data => {
+        if (!data) return
         if (data.error) setError(data.error)
         else setAllGrades(data.grades)
       })
