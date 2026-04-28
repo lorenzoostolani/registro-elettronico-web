@@ -8,7 +8,7 @@ import { ErrorState } from '@/app/components/ui/ErrorState'
 import { AverageCircle } from '@/app/components/features/AverageCircle'
 import { GradeCard } from '@/app/components/features/GradeCard'
 import { SimulatorSection } from '@/app/components/features/SimulatorSection'
-import { Grade, computeAverage, computeGradeNeeded, isValidGrade } from '@/lib/domain/grades/entities'
+import { Grade, computeAverage, isValidGrade } from '@/lib/domain/grades/entities'
 import { useSettings } from '@/lib/hooks/useSettings'
 import { useLocalGrades } from '@/lib/hooks/useLocalGrades'
 
@@ -107,7 +107,7 @@ export default function SubjectDetailPage() {
   if (error) return <ErrorState message={error} />
 
   const subjectName = subjectGrades[0]?.subjectDesc ?? 'Materia'
-  const gradeNeeded = computeGradeNeeded(objective, average ?? Number.NaN, grades.filter(isValidGrade).length)
+
 
   return (
     <div style={{ maxWidth: '600px', margin: '0 auto' }}>

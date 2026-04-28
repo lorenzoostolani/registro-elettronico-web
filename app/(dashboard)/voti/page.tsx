@@ -9,10 +9,6 @@ import { AverageCircle } from '@/app/components/features/AverageCircle'
 import { Grade, computeAverage, computeGradeNeeded, getAverageColorVsObjective, isValidGrade } from '@/lib/domain/grades/entities'
 import { useSettings } from '@/lib/hooks/useSettings'
 
-const TABS = [
-  { id: 'latest', label: 'Ultimi voti' },
-]
-
 export default function VotiPage() {
   const { settings, ready } = useSettings()
   const [grades, setGrades] = useState<Grade[]>([])
