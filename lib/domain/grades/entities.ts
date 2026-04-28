@@ -16,6 +16,9 @@ export interface Grade {
   weightFactor: number
 }
 
+export type GradeType = 'Scritto' | 'Orale' | 'Pratico'
+export type GeneralAverageMode = 'all_grades' | 'three_type_mean'
+
 export type GradeNeededMessage =
   | { type: 'dont_worry' }
   | { type: 'calculation_error' }
@@ -25,6 +28,14 @@ export type GradeNeededMessage =
 
 export function isValidGrade(grade: Grade): boolean {
   return !grade.cancelled && grade.decimalValue !== null && grade.decimalValue !== -1 && grade.decimalValue > 0
+}
+
+export function getGradeType(componentDesc: string): GradeType | null {
+  const lower = componentDesc.trim().toLowerCase()
+  if (lower === 'scritto' || lower === 'scritto/grafico') return 'Scritto'
+  if (lower === 'orale') return 'Orale'
+  if (lower === 'pratico') return 'Pratico'
+  return null
 }
 
 export function computeArithmeticAverage(grades: Grade[]): number | null {
@@ -41,8 +52,18 @@ export function computeWeightedAverage(grades: Grade[]): number | null {
   return totalWeight === 0 ? null : weightedSum / totalWeight
 }
 
-export function computeAverage(grades: Grade[], useWeightedAverage: boolean): number | null {
-  return useWeightedAverage ? computeWeightedAverage(grades) : computeArithmeticAverage(grades)
+export function computeThreeTypeAverage(grades: Grade[]): number | null {
+  const written = computeWeightedAverage(grades.filter((g) => getGradeType(g.componentDesc) === 'Scritto'))
+  const oral = computeWeightedAverage(grades.filter((g) => getGradeType(g.componentDesc) === 'Orale'))
+  const practical = computeWeightedAverage(grades.filter((g) => getGradeType(g.componentDesc) === 'Pratico'))
+
+  const available = [written, oral, practical].filter((v): v is number => v !== null)
+  if (available.length === 0) return null
+  return available.reduce((acc, value) => acc + value, 0) / available.length
+}
+
+export function computeAverage(grades: Grade[], mode: GeneralAverageMode = 'all_grades'): number | null {
+  return mode === 'three_type_mean' ? computeThreeTypeAverage(grades) : computeWeightedAverage(grades)
 }
 
 export function getAverageColor(average: number | null): 'green' | 'amber' | 'red' | 'gray' {

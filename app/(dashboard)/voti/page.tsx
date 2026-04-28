@@ -1,13 +1,21 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { Line, LineChart, ResponsiveContainer, YAxis } from 'recharts'
 import { LoadingSpinner } from '@/app/components/ui/LoadingSpinner'
 import { ErrorState } from '@/app/components/ui/ErrorState'
 import { SubjectRow } from '@/app/components/features/SubjectRow'
 import { AverageCircle } from '@/app/components/features/AverageCircle'
 import { Grade, computeAverage, computeGradeNeeded, getAverageColorVsObjective, isValidGrade } from '@/lib/domain/grades/entities'
 import { useSettings } from '@/lib/hooks/useSettings'
+
+
+function formatPeriodLabel(desc: string, index: number): string {
+  if (desc.toLowerCase() === 'quadrimestre') {
+    if (index === 0) return '1° Quadrimestre'
+    if (index === 1) return '2° Quadrimestre'
+  }
+  return desc
+}
 
 export default function VotiPage() {
   const { settings, ready } = useSettings()
@@ -42,7 +50,7 @@ export default function VotiPage() {
 
   const tabs = useMemo(() => [
     { id: 'latest' as const, label: 'Ultimi voti' },
-    ...periods.map(([id, desc]) => ({ id: id as number, label: desc })),
+    ...periods.map(([id, desc], periodIndex) => ({ id: id as number, label: formatPeriodLabel(desc, periodIndex) })),
     { id: 'general' as const, label: 'Generale' },
   ], [periods])
 
@@ -53,20 +61,9 @@ export default function VotiPage() {
   }, [grades, period])
 
   const overallAverage = useMemo(() =>
-    computeAverage(filteredGrades, settings.useWeightedAverage),
-    [filteredGrades, settings.useWeightedAverage]
+    computeAverage(filteredGrades, settings.generalAverageMode),
+    [filteredGrades, settings.generalAverageMode]
   )
-
-  const chartData = useMemo(() => {
-    const valid = [...filteredGrades]
-      .filter(isValidGrade)
-      .sort((a, b) => a.evtDate.localeCompare(b.evtDate))
-    let total = 0
-    return valid.map((g, i) => {
-      total += g.decimalValue ?? 0
-      return { media: parseFloat((total / (i + 1)).toFixed(2)) }
-    })
-  }, [filteredGrades])
 
   const subjects = useMemo(() => {
     const gradesForSubjects = period === 'latest' && periods.length > 0
@@ -82,7 +79,8 @@ export default function VotiPage() {
 
     return [...group.entries()]
       .map(([subjectId, subGrades]) => {
-        const avg = computeAverage(subGrades, settings.useWeightedAverage)
+        const avgMode = settings.subjectAverageModes[String(subjectId)] ?? settings.generalAverageMode
+        const avg = computeAverage(subGrades, avgMode)
         const objective = settings.objectives[String(subjectId)] ?? settings.objective
         return {
           subjectId,
@@ -98,7 +96,7 @@ export default function VotiPage() {
         const bv = b.average ?? -1
         return settings.sortAscending ? av - bv : bv - av
       })
-  }, [grades, filteredGrades, period, periods, settings])
+  }, [grades, filteredGrades, period, periods, settings.generalAverageMode, settings.objective, settings.objectives, settings.sortAscending, settings.subjectAverageModes])
 
   const latestGrades = useMemo(() =>
     [...grades]
@@ -145,30 +143,10 @@ export default function VotiPage() {
           borderRadius: 'var(--radius)',
           padding: '20px',
           marginBottom: '16px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '20px',
           border: '1px solid var(--border)',
         }}>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <div style={{ display: 'flex', justifyContent: 'center' }}>
             <AverageCircle label="Media" value={overallAverage} size={90} />
-          </div>
-          <div style={{ flex: 1, height: '80px' }}>
-            {chartData.length > 1 && (
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData}>
-                  <YAxis domain={[4, 10]} hide />
-                  <Line
-                    type="monotone"
-                    dataKey="media"
-                    stroke="var(--red)"
-                    strokeWidth={2}
-                    dot={false}
-                    isAnimationActive={false}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            )}
           </div>
         </div>
       )}
