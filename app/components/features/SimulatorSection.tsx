@@ -19,7 +19,6 @@ export function SimulatorSection({
 }) {
   const [value, setValue] = useState('6')
   const [type, setType] = useState<GradeType>('Scritto')
-  const [weightPercent, setWeightPercent] = useState('100')
 
   return (
     <div style={{
@@ -56,20 +55,18 @@ export function SimulatorSection({
           <p style={{ margin: '0 0 10px', fontSize: '12px', color: 'var(--text-2)', fontWeight: 500 }}>
             Aggiungi un voto simulato
           </p>
-          <div style={{ display: 'grid', gap: '8px', gridTemplateColumns: '1fr 1fr 1fr auto' }}>
+          <div style={{ display: 'grid', gap: '8px', gridTemplateColumns: '1fr 1fr auto' }}>
             <input type="number" min={1} max={10} step={0.25} value={value} onChange={e => setValue(e.target.value)} style={inputStyle} />
             <select value={type} onChange={e => setType(e.target.value as GradeType)} style={inputStyle}>
               <option value="Scritto">Scritto</option>
               <option value="Orale">Orale</option>
               <option value="Pratico">Pratico</option>
             </select>
-            <input type="number" min={1} max={300} step={5} value={weightPercent} onChange={e => setWeightPercent(e.target.value)} style={inputStyle} />
             <button
               onClick={() => {
                 const n = Number(value)
-                const w = Number(weightPercent)
-                if (!Number.isNaN(n) && n >= 1 && n <= 10 && !Number.isNaN(w) && w >= 1 && w <= 300) {
-                  addGrade(n, type, w)
+                if (!Number.isNaN(n) && n >= 1 && n <= 10) {
+                  addGrade(n, type, 100)
                 }
               }}
               style={buttonStyle}

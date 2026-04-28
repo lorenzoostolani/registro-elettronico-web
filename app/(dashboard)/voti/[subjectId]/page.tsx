@@ -2,13 +2,12 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { Area, AreaChart, ReferenceLine, ResponsiveContainer, YAxis, Tooltip } from 'recharts'
 import { LoadingSpinner } from '@/app/components/ui/LoadingSpinner'
 import { ErrorState } from '@/app/components/ui/ErrorState'
 import { AverageCircle } from '@/app/components/features/AverageCircle'
 import { GradeCard } from '@/app/components/features/GradeCard'
 import { SimulatorSection } from '@/app/components/features/SimulatorSection'
-import { Grade, GradeType, computeAverage, computeWeightedAverage, getGradeType, isValidGrade } from '@/lib/domain/grades/entities'
+import { Grade, GradeType, computeAverage, computeWeightedAverage, getGradeType } from '@/lib/domain/grades/entities'
 import { useSettings } from '@/lib/hooks/useSettings'
 import { useLocalGrades } from '@/lib/hooks/useLocalGrades'
 
@@ -88,6 +87,7 @@ export default function SubjectDetailPage() {
   )
 
   const { grades: localGrades, addGrade, updateGrade, removeGrade } = useLocalGrades(String(subjectId), period ?? 0)
+  const subjectAverageMode = settings.subjectAverageModes[String(subjectId)] ?? settings.generalAverageMode
 
   const synthetic = useMemo(
     () =>
@@ -111,31 +111,15 @@ export default function SubjectDetailPage() {
     [grades, localGrades, period, subjectId]
   )
 
-  const average = computeAverage(effectiveGrades, settings.generalAverageMode)
+  const average = computeAverage(effectiveGrades, subjectAverageMode)
   const objective = settings.objectives[String(subjectId)] ?? settings.objective
 
   const recalculatedAverage = useMemo(
-    () => computeAverage([...effectiveGrades, ...synthetic], settings.generalAverageMode),
-    [effectiveGrades, synthetic, settings.generalAverageMode]
+    () => computeAverage([...effectiveGrades, ...synthetic], subjectAverageMode),
+    [effectiveGrades, synthetic, subjectAverageMode]
   )
 
   const typeAverage = (type: GradeType) => computeWeightedAverage(effectiveGrades.filter(g => getGradeType(g.componentDesc) === type))
-
-  const chartData = useMemo(() => {
-    const valid = [...effectiveGrades].filter(isValidGrade).sort((a, b) => a.evtDate.localeCompare(b.evtDate))
-    let weightedTotal = 0
-    let totalWeight = 0
-    return valid.map((g) => {
-      const weight = g.weightFactor || 1
-      weightedTotal += (g.decimalValue ?? 0) * weight
-      totalWeight += weight
-      return {
-        date: g.evtDate,
-        voto: g.decimalValue,
-        media: parseFloat((weightedTotal / totalWeight).toFixed(2)),
-      }
-    })
-  }, [effectiveGrades])
 
   const progressPercent = Math.min(100, ((average ?? 0) / objective) * 100)
   const progressColor = (average ?? 0) >= objective ? 'var(--green)' : (average ?? 0) >= objective - 1 ? 'var(--amber)' : 'var(--red)'
@@ -176,28 +160,6 @@ export default function SubjectDetailPage() {
         <AverageCircle label="Orale" value={typeAverage('Orale')} size={80} />
         <AverageCircle label="Pratico" value={typeAverage('Pratico')} size={80} />
       </div>
-
-      {chartData.length > 0 && (
-        <div style={{ background: 'var(--surface)', borderRadius: 'var(--radius)', padding: '16px', marginBottom: '12px', border: '1px solid var(--border)' }}>
-          <p style={{ margin: '0 0 10px', fontSize: '13px', color: 'var(--text-2)' }}>Andamento media</p>
-          <div style={{ height: '140px' }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData}>
-                <defs>
-                  <linearGradient id="mediaGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="var(--red)" stopOpacity={0.4} />
-                    <stop offset="95%" stopColor="var(--red)" stopOpacity={0.0} />
-                  </linearGradient>
-                </defs>
-                <YAxis domain={[4, 10]} hide />
-                <Tooltip contentStyle={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '12px' }} labelStyle={{ color: 'var(--text-2)' }} />
-                <ReferenceLine y={objective} stroke="var(--red)" strokeDasharray="6 4" strokeWidth={1.5} />
-                <Area type="monotone" dataKey="media" stroke="var(--red)" strokeWidth={2} fill="url(#mediaGrad)" dot={false} />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      )}
 
       <div style={{ background: 'var(--surface)', borderRadius: 'var(--radius)', padding: '16px', marginBottom: '12px', border: '1px solid var(--border)' }}>
         <div style={{ height: '10px', background: 'var(--surface-3)', borderRadius: '5px', overflow: 'hidden', marginBottom: '10px' }}>

@@ -8,6 +8,7 @@ export interface AppSettings {
   objectives: Record<string, number>
   sortAscending: boolean
   generalAverageMode: GeneralAverageMode
+  subjectAverageModes: Record<string, GeneralAverageMode>
   studentYear: number
 }
 
@@ -16,6 +17,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   objectives: {},
   sortAscending: false,
   generalAverageMode: 'all_grades',
+  subjectAverageModes: {},
   studentYear: 3,
 }
 
@@ -41,6 +43,7 @@ export function useSettings() {
           ...parsed,
           objective: clampObjective(parsed.objective ?? DEFAULT_SETTINGS.objective),
           objectives: parsed.objectives ?? {},
+          subjectAverageModes: parsed.subjectAverageModes ?? {},
         })
       } catch {
         setSettings(DEFAULT_SETTINGS)
@@ -66,9 +69,11 @@ export function useSettings() {
         updateSettings({ objectives: { ...settings.objectives, [subjectId]: clampObjective(objective) } }),
       setSortAscending: (sortAscending: boolean) => updateSettings({ sortAscending }),
       setGeneralAverageMode: (generalAverageMode: GeneralAverageMode) => updateSettings({ generalAverageMode }),
+      setSubjectAverageMode: (subjectId: string, mode: GeneralAverageMode) =>
+        updateSettings({ subjectAverageModes: { ...settings.subjectAverageModes, [subjectId]: mode } }),
       setStudentYear: (studentYear: number) => updateSettings({ studentYear }),
     }),
-    [settings.objectives]
+    [settings.objectives, settings.subjectAverageModes]
   )
 
   return { settings, actions, ready }
