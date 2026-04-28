@@ -1,11 +1,15 @@
 import { MobileNav } from '@/app/components/layout/MobileNav'
 import { Sidebar } from '@/app/components/layout/Sidebar'
+import { Analytics } from "@vercel/analytics/next"
+import { SpeedInsights } from "@vercel/speed-insights/next"
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <div style={{ display: 'flex', minHeight: '100vh' }}>
       {/* Sidebar: visible only on md+ via CSS inside the component */}
       <Sidebar />
+      <Analytics />
+      <SpeedInsights />
 
       {/*
         Main content:
