@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { Grade } from '@/lib/domain/grades/entities'
 import { formatDate } from '@/lib/utils/dates'
 
@@ -12,6 +13,13 @@ function getDisplayValue(grade: Grade): string {
   return grade.displayValue || (grade.decimalValue !== null && grade.decimalValue !== -1 ? String(grade.decimalValue) : '—')
 }
 
+function parseWeightPercentInput(value: string): number | null {
+  const parsed = Number(value)
+  if (Number.isNaN(parsed)) return null
+  if (parsed < 1 || parsed > 300) return null
+  return Math.round(parsed)
+}
+
 export function GradeCard({
   grade,
   weightPercent,
@@ -24,6 +32,22 @@ export function GradeCard({
   rightAction?: React.ReactNode
 }) {
   const bgColor = getCardColor(grade)
+  const fallbackWeightPercent = Math.round(weightPercent ?? 100)
+  const [weightDraft, setWeightDraft] = useState(String(fallbackWeightPercent))
+
+  useEffect(() => {
+    setWeightDraft(String(fallbackWeightPercent))
+  }, [fallbackWeightPercent])
+
+  const commitWeightPercent = () => {
+    const parsed = parseWeightPercentInput(weightDraft)
+    if (parsed !== null) {
+      onWeightPercentChange?.(parsed)
+      setWeightDraft(String(parsed))
+      return
+    }
+    setWeightDraft(String(fallbackWeightPercent))
+  }
 
   return (
     <div style={{
@@ -77,11 +101,9 @@ export function GradeCard({
                 min={1}
                 max={300}
                 step={5}
-                value={Math.round(weightPercent ?? 100)}
-                onChange={(event) => {
-                  const next = Number(event.target.value)
-                  if (!Number.isNaN(next) && next >= 1 && next <= 300) onWeightPercentChange(next)
-                }}
+                value={weightDraft}
+                onChange={(event) => setWeightDraft(event.target.value)}
+                onBlur={commitWeightPercent}
                 style={{
                   width: '64px',
                   padding: '4px 6px',

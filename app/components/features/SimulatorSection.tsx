@@ -1,8 +1,15 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { GradeType } from '@/lib/domain/grades/entities'
 import { LocalGrade } from '@/lib/hooks/useLocalGrades'
+
+function parseWeightPercentInput(value: string): number | null {
+  const parsed = Number(value)
+  if (Number.isNaN(parsed)) return null
+  if (parsed < 1 || parsed > 300) return null
+  return Math.round(parsed)
+}
 
 export function SimulatorSection({
   localGrades,
@@ -19,7 +26,27 @@ export function SimulatorSection({
 }) {
   const [value, setValue] = useState('6')
   const [type, setType] = useState<GradeType>('Scritto')
+  const [weightDrafts, setWeightDrafts] = useState<Record<string, string>>({})
 
+  useEffect(() => {
+    setWeightDrafts((prev) => {
+      const next: Record<string, string> = {}
+      localGrades.forEach((grade) => {
+        next[grade.id] = prev[grade.id] ?? String(Math.round(grade.weightPercent))
+      })
+      return next
+    })
+  }, [localGrades])
+
+  const commitWeightPercent = (grade: LocalGrade) => {
+    const parsed = parseWeightPercentInput(weightDrafts[grade.id] ?? '')
+    if (parsed !== null) {
+      updateGrade(grade.id, { weightPercent: parsed })
+      setWeightDrafts((prev) => ({ ...prev, [grade.id]: String(parsed) }))
+      return
+    }
+    setWeightDrafts((prev) => ({ ...prev, [grade.id]: String(Math.round(grade.weightPercent)) }))
+  }
   return (
     <div style={{
       background: 'var(--surface)',
@@ -105,11 +132,9 @@ export function SimulatorSection({
                         min={1}
                         max={300}
                         step={5}
-                        value={Math.round(grade.weightPercent)}
-                        onChange={(event) => {
-                          const next = Number(event.target.value)
-                          if (!Number.isNaN(next) && next >= 1 && next <= 300) updateGrade(grade.id, { weightPercent: next })
-                        }}
+                        value={weightDrafts[grade.id] ?? String(Math.round(grade.weightPercent))}
+                        onChange={(event) => setWeightDrafts((prev) => ({ ...prev, [grade.id]: event.target.value }))}
+                        onBlur={() => commitWeightPercent(grade)}
                         style={{ ...inputStyle, width: '64px', padding: '4px 6px' }}
                       />
                     </label>
