@@ -3,10 +3,35 @@ import { Sidebar } from '@/app/components/layout/Sidebar'
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-screen">
+    <div style={{ display: 'flex', minHeight: '100vh' }}>
+      {/* Sidebar: visible only on md+ via CSS inside the component */}
       <Sidebar />
-      <main className="w-full p-4 pb-20 md:p-8 md:pb-8">{children}</main>
+
+      {/*
+        Main content:
+        - On desktop (md+): left margin 220px to clear the sidebar, no bottom padding for mobile nav
+        - On mobile: no left margin, bottom padding to clear the bottom nav
+      */}
+      <main className="dashboard-main">
+        {children}
+      </main>
+
+      {/* Bottom nav: visible only on mobile via CSS inside the component */}
       <MobileNav />
+
+      <style>{`
+        .dashboard-main {
+          flex: 1;
+          width: 100%;
+          padding: 24px 16px 90px; /* bottom clears mobile nav */
+        }
+        @media (min-width: 769px) { /* matches sidebar hide breakpoint */
+          .dashboard-main {
+            margin-left: 220px;
+            padding: 32px;
+          }
+        }
+      `}</style>
     </div>
   )
 }

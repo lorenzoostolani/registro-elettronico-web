@@ -79,8 +79,13 @@ export default function SubjectDetailPage() {
     return computeAverage([...grades, ...synthetic], settings.useWeightedAverage)
   }, [grades, localGrades, period, settings.useWeightedAverage, subjectId])
 
-  const typeAverage = (type: string) =>
-    computeAverage(grades.filter(g => g.componentDesc === type), settings.useWeightedAverage)
+  const typeAverage = (type: string) => {
+    // The Spaggiari API uses "Scritto/Grafico" for written grades
+    const filter = type === 'Scritto'
+      ? grades.filter(g => g.componentDesc === 'Scritto' || g.componentDesc === 'Scritto/Grafico')
+      : grades.filter(g => g.componentDesc === type)
+    return computeAverage(filter, settings.useWeightedAverage)
+  }
 
   const chartData = useMemo(() => {
     const valid = [...grades].filter(isValidGrade).sort((a, b) => a.evtDate.localeCompare(b.evtDate))
