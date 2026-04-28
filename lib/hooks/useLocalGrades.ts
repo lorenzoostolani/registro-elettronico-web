@@ -1,10 +1,13 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { GradeType } from '@/lib/domain/grades/entities'
 
 export interface LocalGrade {
   value: number
   id: string
+  type: GradeType
+  weightPercent: number
 }
 
 export type LocalGrades = Record<string, LocalGrade[]>
@@ -36,13 +39,17 @@ export function useLocalGrades(subjectId: string, periodPos: number) {
     window.localStorage.setItem(KEY, JSON.stringify(parsed))
   }
 
-  const addGrade = (value: number) => {
-    persist([...grades, { value, id: crypto.randomUUID() }])
+  const addGrade = (value: number, type: GradeType, weightPercent: number) => {
+    persist([...grades, { value, type, weightPercent, id: crypto.randomUUID() }])
+  }
+
+  const updateGrade = (id: string, patch: Partial<Pick<LocalGrade, 'type' | 'weightPercent'>>) => {
+    persist(grades.map((grade) => (grade.id === id ? { ...grade, ...patch } : grade)))
   }
 
   const removeGrade = (id: string) => {
     persist(grades.filter((grade) => grade.id !== id))
   }
 
-  return { grades, addGrade, removeGrade }
+  return { grades, addGrade, updateGrade, removeGrade }
 }

@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useEffect, useState } from 'react'
 
 const items = [
   { href: '/voti', label: 'Voti', icon: <HomeIcon /> },
@@ -10,6 +11,18 @@ const items = [
 
 export function MobileNav() {
   const pathname = usePathname()
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const query = window.matchMedia('(max-width: 768px)')
+    const sync = () => setIsMobile(query.matches)
+    sync()
+    query.addEventListener('change', sync)
+    return () => query.removeEventListener('change', sync)
+  }, [])
+
+  if (!isMobile) return null
+
   return (
     <nav style={{
       position: 'fixed', bottom: 0, left: 0, right: 0,
@@ -18,7 +31,7 @@ export function MobileNav() {
       display: 'flex',
       zIndex: 50,
       paddingBottom: 'env(safe-area-inset-bottom)',
-    }} className="mobile-nav">
+    }}>
       {items.map(item => {
         const active = pathname.startsWith(item.href)
         return (
@@ -34,7 +47,6 @@ export function MobileNav() {
           </Link>
         )
       })}
-      <style>{`.mobile-nav { display: none; } @media (max-width: 768px) { .mobile-nav { display: flex !important; } }`}</style>
     </nav>
   )
 }
