@@ -48,7 +48,7 @@ export default function SubjectDetailPage() {
     if (!Number.isNaN(requestedPeriod) && periods.some(([id]) => id === requestedPeriod)) {
       return requestedPeriod
     }
-    return periods[0]?.[0] ?? null
+    return null
   }, [periods, searchParams])
 
   const grades = useMemo(
