@@ -1,4 +1,4 @@
-const BASE_URL = 'https://web.spaggiari.eu/rest/v1'
+const BASE_URL = 'https://spaggiari-proxy.lorenzoostolani.workers.dev'
 
 export class SpaggiariApiError extends Error {
   status: number
@@ -13,27 +13,22 @@ export class SpaggiariApiError extends Error {
 }
 
 export async function spaggiariFetch<T>(path: string, init?: RequestInit, token?: string): Promise<T> {
-  const { request } = await import('undici')
-
   const headers: Record<string, string> = {
-  'content-type': 'application/json',
-  'user-agent': 'CVVS/std/4.2.3',
-  'z-dev-apikey': 'Tg1NWEwNGIgIC0K',
-  'z-if-none-match': '',
+    'Content-Type': 'application/json',
   }
-  if (token) headers['z-auth-token'] = token
+  if (token) headers['Z-Auth-Token'] = token
 
-  const { statusCode, body } = await request(`${BASE_URL}${path}`, {
-    method: (init?.method as 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH') ?? 'GET',
+  const response = await fetch(`${BASE_URL}${path}`, {
+    ...init,
     headers,
-    body: init?.body as string | undefined,
+    cache: 'no-store',
   })
 
-  const raw = await body.text()
+  const raw = await response.text()
 
-  if (statusCode < 200 || statusCode >= 300) {
+  if (!response.ok) {
     let details: unknown = raw
-    let message = `Errore login Spaggiari (${statusCode})`
+    let message = `Errore Spaggiari (${response.status})`
     try {
       const parsed = JSON.parse(raw) as { message?: string; error?: string; title?: string }
       details = parsed
@@ -41,7 +36,7 @@ export async function spaggiariFetch<T>(path: string, init?: RequestInit, token?
     } catch {
       if (raw) message = raw
     }
-    throw new SpaggiariApiError(statusCode, message, details)
+    throw new SpaggiariApiError(response.status, message, details)
   }
 
   return JSON.parse(raw) as T
