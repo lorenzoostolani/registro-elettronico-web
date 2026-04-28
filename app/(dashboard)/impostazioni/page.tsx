@@ -21,6 +21,8 @@ export default function ImpostazioniPage() {
   const router = useRouter()
   const { settings, actions, ready } = useSettings()
   const [grades, setGrades] = useState<Grade[]>([])
+  const [objectiveDraft, setObjectiveDraft] = useState(String(settings.objective))
+  const [subjectObjectiveDrafts, setSubjectObjectiveDrafts] = useState<Record<string, string>>({})
 
   async function handleLogout() {
     await fetch('/api/auth/logout', { method: 'POST' })
@@ -42,6 +44,44 @@ export default function ImpostazioniPage() {
     return [...map.entries()]
   }, [grades])
 
+  useEffect(() => {
+    setObjectiveDraft(String(settings.objective))
+  }, [settings.objective])
+
+  useEffect(() => {
+    setSubjectObjectiveDrafts((prev) => {
+      const next: Record<string, string> = {}
+      subjects.forEach(([subjectId]) => {
+        const key = String(subjectId)
+        next[key] = prev[key] ?? String(settings.objectives[key] ?? settings.objective)
+      })
+      return next
+    })
+  }, [settings.objective, settings.objectives, subjects])
+
+  const commitGeneralObjective = () => {
+    const parsed = parseObjectiveInput(objectiveDraft)
+    if (parsed !== null) {
+      actions.setObjective(parsed)
+      setObjectiveDraft(String(parsed))
+      return
+    }
+
+    setObjectiveDraft(String(settings.objective))
+  }
+
+  const commitSubjectObjective = (subjectId: string) => {
+    const parsed = parseObjectiveInput(subjectObjectiveDrafts[subjectId] ?? '')
+    if (parsed !== null) {
+      actions.setSubjectObjective(subjectId, parsed)
+      setSubjectObjectiveDrafts((prev) => ({ ...prev, [subjectId]: String(parsed) }))
+      return
+    }
+
+    const fallback = settings.objectives[subjectId] ?? settings.objective
+    setSubjectObjectiveDrafts((prev) => ({ ...prev, [subjectId]: String(fallback) }))
+  }
+
   if (!ready) return <LoadingSpinner />
 
   return (
@@ -59,11 +99,11 @@ export default function ImpostazioniPage() {
             min={0}
             max={10}
             step={0.1}
-            value={settings.objective}
+            value={objectiveDraft}
             onChange={(e) => {
-              const parsed = parseObjectiveInput(e.target.value)
-              if (parsed !== null) actions.setObjective(parsed)
+              setObjectiveDraft(e.target.value)
             }}
+            onBlur={commitGeneralObjective}
             className="mt-2 w-28 rounded-lg border border-borderToken bg-surface2 px-3 py-2 text-text"
           />
         </Card>
@@ -83,11 +123,9 @@ export default function ImpostazioniPage() {
                   min={0}
                   max={10}
                   step={0.1}
-                  value={settings.objectives[String(subjectId)] ?? settings.objective}
-                  onChange={(e) => {
-                    const parsed = parseObjectiveInput(e.target.value)
-                    if (parsed !== null) actions.setSubjectObjective(String(subjectId), parsed)
-                  }}
+                  value={subjectObjectiveDrafts[String(subjectId)] ?? String(settings.objectives[String(subjectId)] ?? settings.objective)}
+                  onChange={(e) => setSubjectObjectiveDrafts((prev) => ({ ...prev, [String(subjectId)]: e.target.value }))}
+                  onBlur={() => commitSubjectObjective(String(subjectId))}
                   className="w-24 rounded-lg border border-borderToken bg-surface2 px-2 py-1 text-text"
                 />
               </div>
