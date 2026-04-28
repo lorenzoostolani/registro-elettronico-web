@@ -54,7 +54,7 @@ export default function ImpostazioniPage() {
               const parsed = parseObjectiveInput(e.target.value)
               if (parsed !== null) actions.setObjective(parsed)
             }}
-            className="mt-2 w-28 rounded-lg border border-borderToken px-3 py-2"
+            className="mt-2 w-28 rounded-lg border border-borderToken bg-surface2 px-3 py-2 text-text"
           />
         </Card>
 
@@ -78,7 +78,7 @@ export default function ImpostazioniPage() {
                     const parsed = parseObjectiveInput(e.target.value)
                     if (parsed !== null) actions.setSubjectObjective(String(subjectId), parsed)
                   }}
-                  className="w-24 rounded-lg border border-borderToken px-2 py-1"
+                  className="w-24 rounded-lg border border-borderToken bg-surface2 px-2 py-1 text-text"
                 />
               </div>
             ))}
@@ -98,7 +98,7 @@ export default function ImpostazioniPage() {
         </Card>
 
         <Card>
-          <h3 className="font-semibold">Calcolo media generale della materia</h3>
+          <h3 className="font-semibold">Calcolo media (default)</h3>
           <label className="mt-2 block text-sm">
             <input
               type="radio"
@@ -115,11 +115,36 @@ export default function ImpostazioniPage() {
             />{' '}
             Media delle 3 medie: scritto, orale, pratico
           </label>
+          <p className="mt-3 text-sm text-text2">Questo valore è usato come default. Puoi sovrascriverlo per materia qui sotto.</p>
+        </Card>
+
+        <Card>
+          <h3 className="mb-2 font-semibold">Calcolo media per singola materia</h3>
+          <div className="space-y-3">
+            {subjects.map(([subjectId, subjectDesc]) => {
+              const currentMode = settings.subjectAverageModes[String(subjectId)] ?? settings.generalAverageMode
+              return (
+                <div key={subjectId} className="grid grid-cols-[1fr_auto] items-center gap-3">
+                  <label htmlFor={`avg-mode-${subjectId}`} className="text-sm">{subjectDesc}</label>
+                  <select
+                    id={`avg-mode-${subjectId}`}
+                    aria-label={`Calcolo media ${subjectDesc}`}
+                    value={currentMode}
+                    onChange={(e) => actions.setSubjectAverageMode(String(subjectId), e.target.value as 'all_grades' | 'three_type_mean')}
+                    className="rounded-lg border border-borderToken bg-surface2 px-3 py-1 text-sm text-text"
+                  >
+                    <option value="all_grades">Media di tutti i voti</option>
+                    <option value="three_type_mean">Media delle medie (S/O/P)</option>
+                  </select>
+                </div>
+              )
+            })}
+          </div>
         </Card>
 
         <Card>
           <h3 className="font-semibold">Anno scolastico / classe</h3>
-          <select value={settings.studentYear} onChange={(e) => actions.setStudentYear(Number(e.target.value))} className="mt-2 rounded-lg border border-borderToken px-3 py-2">
+          <select value={settings.studentYear} onChange={(e) => actions.setStudentYear(Number(e.target.value))} className="mt-2 rounded-lg border border-borderToken bg-surface2 px-3 py-2 text-text">
             {[1, 2, 3, 4, 5].map((y) => (
               <option key={y} value={y}>{y}ª superiore</option>
             ))}
