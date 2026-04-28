@@ -9,11 +9,12 @@ export async function GET() {
   try {
     const grades = await fetchGrades(session.token, session.studentId)
     return NextResponse.json({ grades })
-  } catch (error: any) {
-    console.error('[API Grades] Fetch failed:', error.status, error.message, error.details || error);
+  } catch (error) {
+    const err = error as Error & { status?: number; details?: unknown };
+    console.error('[API Grades] Fetch failed:', err.status, err.message, err.details || err);
     return NextResponse.json({ 
       error: 'Errore recupero voti',
-      details: error.message || 'Unknown error'
-    }, { status: error.status || 500 })
+      details: err.message || 'Unknown error'
+    }, { status: err.status || 500 })
   }
 }
