@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { LoadingSpinner } from '@/app/components/ui/LoadingSpinner'
 import { ErrorState } from '@/app/components/ui/ErrorState'
 import { AverageCircle } from '@/app/components/features/AverageCircle'
@@ -13,23 +13,15 @@ import { useLocalGrades } from '@/lib/hooks/useLocalGrades'
 
 const WEIGHTS_KEY = 'rv_grade_weights'
 
-function formatPeriodLabel(desc: string, index: number): string {
-  if (desc.toLowerCase() === 'quadrimestre') {
-    if (index === 0) return '1° Quadrimestre'
-    if (index === 1) return '2° Quadrimestre'
-  }
-  return desc
-}
-
 export default function SubjectDetailPage() {
   const params = useParams<{ subjectId: string }>()
+  const searchParams = useSearchParams()
   const router = useRouter()
   const subjectId = Number(params.subjectId)
   const { settings, ready } = useSettings()
   const [allGrades, setAllGrades] = useState<Grade[]>([])
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
-  const [period, setPeriod] = useState<number | null>(null)
   const [weightOverrides, setWeightOverrides] = useState<Record<string, number>>({})
 
   useEffect(() => {
@@ -51,13 +43,20 @@ export default function SubjectDetailPage() {
     return [...map.entries()].sort((a, b) => a[0] - b[0])
   }, [subjectGrades])
 
-  useEffect(() => {
-    if (period === null && periods.length > 0) setPeriod(periods[0][0])
-  }, [period, periods])
+  const selectedPeriod = useMemo(() => {
+    const requestedPeriod = Number(searchParams.get('period'))
+    if (!Number.isNaN(requestedPeriod) && periods.some(([id]) => id === requestedPeriod)) {
+      return requestedPeriod
+    }
+    return null
+  }, [periods, searchParams])
 
-  const grades = useMemo(() => subjectGrades.filter(g => g.periodPos === period), [subjectGrades, period])
+  const grades = useMemo(
+    () => (selectedPeriod == null ? subjectGrades : subjectGrades.filter(g => g.periodPos === selectedPeriod)),
+    [subjectGrades, selectedPeriod]
+  )
 
-  const weightsStorageKey = `${subjectId}_${period ?? 0}`
+  const weightsStorageKey = `${subjectId}_${selectedPeriod ?? 0}`
   useEffect(() => {
     if (typeof window === 'undefined') return
     const raw = window.localStorage.getItem(WEIGHTS_KEY)
@@ -86,7 +85,7 @@ export default function SubjectDetailPage() {
     [grades, weightOverrides]
   )
 
-  const { grades: localGrades, addGrade, updateGrade, removeGrade } = useLocalGrades(String(subjectId), period ?? 0)
+  const { grades: localGrades, addGrade, updateGrade, removeGrade } = useLocalGrades(String(subjectId), selectedPeriod ?? 0)
   const subjectAverageMode = settings.subjectAverageModes[String(subjectId)] ?? settings.generalAverageMode
 
   const synthetic = useMemo(
@@ -101,14 +100,14 @@ export default function SubjectDetailPage() {
         displayValue: String(g.value),
         cancelled: false,
         underlined: false,
-        periodPos: period ?? 0,
+        periodPos: selectedPeriod ?? 0,
         periodDesc: grades[0]?.periodDesc ?? '',
         componentPos: 0,
         componentDesc: g.type,
         weightFactor: g.weightPercent / 100,
         notesForFamily: '',
       })) as Grade[],
-    [grades, localGrades, period, subjectId]
+    [grades, localGrades, selectedPeriod, subjectId]
   )
 
   const gradesWithSimulation = useMemo(
@@ -142,23 +141,6 @@ export default function SubjectDetailPage() {
         </button>
         <h1 style={{ fontSize: '18px', fontWeight: 700, margin: 0 }}>{subjectName}</h1>
       </div>
-
-      {periods.length > 1 && (
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' }}>
-          {periods.map(([id, desc], periodIndex) => (
-            <button
-              key={id}
-              onClick={() => setPeriod(id)}
-              style={{
-                padding: '7px 14px', borderRadius: '20px', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 600,
-                background: period === id ? 'var(--red)' : 'var(--surface)', color: period === id ? '#fff' : 'var(--text-2)',
-              }}
-            >
-              {formatPeriodLabel(desc, periodIndex)}
-            </button>
-          ))}
-        </div>
-      )}
 
       <div style={{ background: 'var(--surface)', borderRadius: 'var(--radius)', padding: '20px', marginBottom: '12px', border: '1px solid var(--border)', display: 'flex', justifyContent: 'space-around' }}>
         <AverageCircle label="Scritto" value={typeAverage('Scritto')} size={80} />

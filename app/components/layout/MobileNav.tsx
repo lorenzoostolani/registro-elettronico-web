@@ -26,11 +26,16 @@ export function MobileNav() {
   return (
     <nav style={{
       position: 'fixed', bottom: 0, left: 0, right: 0,
-      background: 'var(--surface)',
+      height: '64px',
+      background: 'rgba(36, 36, 36, 0.96)',
+      backdropFilter: 'blur(8px)',
       borderTop: '1px solid var(--border)',
       display: 'flex',
       zIndex: 50,
       paddingBottom: 'env(safe-area-inset-bottom)',
+      transform: 'translateZ(0)',
+      WebkitTransform: 'translateZ(0)',
+      contain: 'layout paint style',
     }}>
       {items.map(item => {
         const active = pathname.startsWith(item.href)
