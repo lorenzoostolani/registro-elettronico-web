@@ -1,30 +1,43 @@
 'use client'
 
 import Link from 'next/link'
-import { Star, SlidersHorizontal } from 'lucide-react'
 import { usePathname } from 'next/navigation'
-import clsx from 'clsx'
 
 const items = [
-  { href: '/voti', label: 'Voti', icon: Star },
-  { href: '/impostazioni', label: 'Impostazioni', icon: SlidersHorizontal }
+  { href: '/voti', label: 'Voti', icon: <HomeIcon /> },
+  { href: '/impostazioni', label: 'Impostazioni', icon: <SettingsIcon /> },
 ]
 
 export function MobileNav() {
   const pathname = usePathname()
-
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-20 grid grid-cols-2 border-t border-borderToken bg-surface md:hidden">
-      {items.map((item) => {
-        const Icon = item.icon
+    <nav style={{
+      position: 'fixed', bottom: 0, left: 0, right: 0,
+      background: 'var(--surface)',
+      borderTop: '1px solid var(--border)',
+      display: 'flex',
+      zIndex: 50,
+      paddingBottom: 'env(safe-area-inset-bottom)',
+    }} className="mobile-nav">
+      {items.map(item => {
         const active = pathname.startsWith(item.href)
         return (
-          <Link key={item.href} href={item.href} className={clsx('flex flex-col items-center py-2 text-xs', active ? 'text-blueToken' : 'text-text2')}>
-            <Icon className="h-4 w-4" />
-            {item.label}
+          <Link key={item.href} href={item.href} style={{
+            flex: 1, display: 'flex', flexDirection: 'column',
+            alignItems: 'center', justifyContent: 'center',
+            padding: '10px 4px',
+            color: active ? 'var(--red)' : 'var(--text-3)',
+            textDecoration: 'none',
+          }}>
+            <span style={{ width: '22px', height: '22px' }}>{item.icon}</span>
+            <span style={{ fontSize: '10px', marginTop: '2px', fontWeight: active ? 600 : 400 }}>{item.label}</span>
           </Link>
         )
       })}
+      <style>{`.mobile-nav { display: none; } @media (max-width: 768px) { .mobile-nav { display: flex !important; } }`}</style>
     </nav>
   )
 }
+
+function HomeIcon() { return <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> }
+function SettingsIcon() { return <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg> }

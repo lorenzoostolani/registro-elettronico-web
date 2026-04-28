@@ -1,6 +1,5 @@
 import Link from 'next/link'
-import { Card } from '@/app/components/ui/Card'
-import { Badge } from '@/app/components/ui/Badge'
+import { AverageCircle } from './AverageCircle'
 import { GradeNeededBadge } from './GradeNeededBadge'
 import { GradeNeededMessage } from '@/lib/domain/grades/entities'
 
@@ -8,8 +7,7 @@ export function SubjectRow({
   subjectId,
   subjectDesc,
   average,
-  averageVariant,
-  needed
+  needed,
 }: {
   subjectId: number
   subjectDesc: string
@@ -18,17 +16,34 @@ export function SubjectRow({
   needed: GradeNeededMessage
 }) {
   return (
-    <Link href={`/voti/${subjectId}`}>
-      <Card hover className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h3 className="font-semibold">{subjectDesc}</h3>
-          <p className="text-sm text-text2">Media: {average === null ? '—' : average.toFixed(2)}</p>
+    <Link href={`/voti/${subjectId}`} style={{ textDecoration: 'none' }}>
+      <div style={{
+        background: 'var(--surface)',
+        border: '1px solid var(--border)',
+        borderRadius: 'var(--radius)',
+        padding: '16px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '16px',
+        cursor: 'pointer',
+        transition: 'background 0.15s',
+      }}
+        onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-2)')}
+        onMouseLeave={e => (e.currentTarget.style.background = 'var(--surface)')}
+      >
+        <AverageCircle label="" value={average} size={72} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p style={{ margin: 0, fontWeight: 600, fontSize: '15px', color: 'var(--text)' }}>
+            {subjectDesc}
+          </p>
+          <div style={{ marginTop: '6px' }}>
+            <GradeNeededBadge message={needed} />
+          </div>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge variant={averageVariant}>{averageVariant.toUpperCase()}</Badge>
-          <GradeNeededBadge message={needed} />
-        </div>
-      </Card>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="9 18 15 12 9 6"/>
+        </svg>
+      </div>
     </Link>
   )
 }

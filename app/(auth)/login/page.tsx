@@ -1,9 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
-import { Card } from '@/app/components/ui/Card'
-import { ErrorState } from '@/app/components/ui/ErrorState'
 
 interface ParentChoice {
   cid: string
@@ -16,67 +14,115 @@ export default function LoginPage() {
   const router = useRouter()
   const [uid, setUid] = useState('')
   const [pass, setPass] = useState('')
-  const [error, setError] = useState<string | null>(null)
-  const [choices, setChoices] = useState<ParentChoice[]>([])
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [parentChoices, setParentChoices] = useState<ParentChoice[] | null>(null)
 
-  const login = async (ident?: string) => {
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault()
+    setError('')
     setLoading(true)
-    setError(null)
-    const response = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ uid, pass, ident })
-    })
-    const data = await response.json()
-    setLoading(false)
-
-    if (!response.ok) {
-      setError(data.error ?? `Errore login (${response.status})`)
-      return
-    }
-
-    if (data.choices) {
-      setChoices(data.choices)
-      return
-    }
-
-    router.replace('/voti')
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ uid, pass }),
+      })
+      const data = await res.json()
+      if (!res.ok) { setError(data.error ?? 'Credenziali non valide'); return }
+      if (data.type === 'parent_selection') { setParentChoices(data.choices); return }
+      router.push('/voti')
+    } catch { setError('Errore di rete') }
+    finally { setLoading(false) }
   }
 
-  return (
-    <div className="mx-auto flex min-h-screen w-full max-w-md items-center p-4">
-      <Card className="w-full">
-        <h1 className="mb-1 text-2xl font-bold">Accedi</h1>
-        <p className="mb-4 text-sm text-text2">Inserisci credenziali Classeviva</p>
-        {error ? <ErrorState message={error} /> : null}
+  async function handleParentSelect(ident: string) {
+    setError(''); setLoading(true)
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ uid, pass, ident }),
+      })
+      const data = await res.json()
+      if (!res.ok) { setError(data.error ?? 'Errore selezione'); return }
+      router.push('/voti')
+    } catch { setError('Errore di rete') }
+    finally { setLoading(false) }
+  }
 
-        <div className="mt-4 space-y-3">
-          <input value={uid} onChange={(e) => setUid(e.target.value)} placeholder="S0000000X" className="w-full rounded-lg border border-borderToken px-3 py-2" />
-          <input
-            type="password"
-            value={pass}
-            onChange={(e) => setPass(e.target.value)}
-            placeholder="Password"
-            className="w-full rounded-lg border border-borderToken px-3 py-2"
-          />
-          <button onClick={() => login()} disabled={loading} className="w-full rounded-lg bg-blueToken px-4 py-2 font-semibold text-white disabled:opacity-50">
-            {loading ? 'Attendi...' : 'Login'}
-          </button>
-        </div>
-
-        {choices.length > 0 ? (
-          <div className="mt-5 space-y-2">
-            <p className="text-sm font-semibold">Seleziona studente</p>
-            {choices.map((choice) => (
-              <button key={choice.cid} onClick={() => login(choice.ident)} className="w-full rounded-lg border border-borderToken p-2 text-left hover:bg-surface-2">
-                <p className="font-medium">{choice.name}</p>
-                <p className="text-xs text-text2">{choice.school}</p>
+  if (parentChoices) {
+    return (
+      <div style={s.page}>
+        <div style={s.card}>
+          <h1 style={s.title}>Seleziona profilo</h1>
+          <p style={{ color: 'var(--text-2)', fontSize: '14px', marginBottom: '20px', textAlign: 'center' }}>
+            Scegli il profilo con cui accedere
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {parentChoices.map(c => (
+              <button key={c.ident} onClick={() => handleParentSelect(c.ident)} disabled={loading} style={s.profileBtn}>
+                <div style={{ fontWeight: 600, fontSize: '14px', color: 'var(--text)' }}>{c.name}</div>
+                <div style={{ fontSize: '12px', color: 'var(--text-2)', marginTop: '2px' }}>{c.school}</div>
               </button>
             ))}
           </div>
-        ) : null}
-      </Card>
+          {error && <p style={s.error}>{error}</p>}
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div style={s.page}>
+      <div style={s.card}>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '24px' }}>
+          <div style={{ width: '56px', height: '56px', background: 'var(--red)', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+              <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+          </div>
+        </div>
+        <h1 style={s.title}>Registro Elettronico</h1>
+        <p style={{ color: 'var(--text-2)', fontSize: '14px', marginBottom: '28px', textAlign: 'center' }}>
+          Accedi con le credenziali Classeviva
+        </p>
+
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <div style={s.field}>
+            <label style={s.label}>Codice utente</label>
+            <input type="text" value={uid} onChange={e => setUid(e.target.value)}
+              placeholder="es. S0000000X" autoComplete="username" autoFocus required style={s.input} />
+          </div>
+          <div style={s.field}>
+            <label style={s.label}>Password</label>
+            <input type="password" value={pass} onChange={e => setPass(e.target.value)}
+              placeholder="••••••••" autoComplete="current-password" required style={s.input} />
+          </div>
+          {error && <p style={s.error}>{error}</p>}
+          <button type="submit" disabled={loading} style={s.btn}>
+            {loading ? (
+              <span style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
+                <span style={{ width: '14px', height: '14px', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', display: 'inline-block', animation: 'spin 0.7s linear infinite' }} />
+                Accesso...
+              </span>
+            ) : 'Accedi'}
+          </button>
+        </form>
+      </div>
     </div>
   )
+}
+
+const s: Record<string, React.CSSProperties> = {
+  page: { minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', background: 'var(--bg)' },
+  card: { background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '20px', padding: '40px 32px', width: '100%', maxWidth: '380px' },
+  title: { textAlign: 'center', marginBottom: '6px', fontSize: '1.3rem', fontWeight: 700 },
+  field: { display: 'flex', flexDirection: 'column', gap: '6px' },
+  label: { fontSize: '13px', fontWeight: 500, color: 'var(--text-2)' },
+  input: { padding: '11px 14px', border: '1px solid var(--border-strong)', borderRadius: '10px', fontSize: '15px', background: 'var(--surface-2)', color: 'var(--text)', outline: 'none', width: '100%' },
+  btn: { padding: '12px', background: 'var(--red)', color: '#fff', border: 'none', borderRadius: '10px', fontSize: '15px', fontWeight: 700, cursor: 'pointer', marginTop: '4px' },
+  error: { color: 'var(--red)', fontSize: '13px', background: 'rgba(244,67,54,0.1)', border: '1px solid rgba(244,67,54,0.3)', borderRadius: '8px', padding: '8px 12px', margin: 0 },
+  profileBtn: { padding: '14px 16px', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: '10px', cursor: 'pointer', textAlign: 'left', width: '100%' },
 }

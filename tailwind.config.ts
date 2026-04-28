@@ -12,10 +12,12 @@ const config: Config = {
         bg: 'var(--bg)',
         surface: 'var(--surface)',
         surface2: 'var(--surface-2)',
+        surface3: 'var(--surface-3)',
         borderToken: 'var(--border)',
+        borderStrong: 'var(--border-strong)',
         text: 'var(--text)',
         text2: 'var(--text-2)',
-        text3: 'var(--text-3)'
+        text3: 'var(--text-3)',
       }
     }
   },
