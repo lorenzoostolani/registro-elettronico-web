@@ -12,7 +12,17 @@ function getDisplayValue(grade: Grade): string {
   return grade.displayValue || (grade.decimalValue !== null && grade.decimalValue !== -1 ? String(grade.decimalValue) : '—')
 }
 
-export function GradeCard({ grade }: { grade: Grade }) {
+export function GradeCard({
+  grade,
+  weightPercent,
+  onWeightPercentChange,
+  rightAction,
+}: {
+  grade: Grade
+  weightPercent?: number
+  onWeightPercentChange?: (weightPercent: number) => void
+  rightAction?: React.ReactNode
+}) {
   const bgColor = getCardColor(grade)
 
   return (
@@ -25,7 +35,6 @@ export function GradeCard({ grade }: { grade: Grade }) {
       gap: '16px',
       opacity: grade.cancelled ? 0.5 : 1,
     }}>
-      {/* Grade circle */}
       <div style={{
         width: '52px', height: '52px',
         borderRadius: '50%',
@@ -43,7 +52,6 @@ export function GradeCard({ grade }: { grade: Grade }) {
         </span>
       </div>
 
-      {/* Info */}
       <div style={{ flex: 1, minWidth: 0 }}>
         <p style={{ margin: 0, fontWeight: 600, fontSize: '14px', color: '#fff' }}>
           {grade.subjectDesc}{grade.componentDesc ? ` - ${grade.componentDesc}` : ''}
@@ -57,6 +65,40 @@ export function GradeCard({ grade }: { grade: Grade }) {
           {formatDate(grade.evtDate)}
         </p>
       </div>
+
+      {(onWeightPercentChange || rightAction) && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', alignItems: 'flex-end' }}>
+          {onWeightPercentChange && (
+            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#fff', fontSize: '12px' }}>
+              Peso
+              <input
+                aria-label="Peso voto in percentuale"
+                type="number"
+                min={1}
+                max={300}
+                step={5}
+                value={Math.round(weightPercent ?? 100)}
+                onChange={(event) => {
+                  const next = Number(event.target.value)
+                  if (!Number.isNaN(next) && next >= 1 && next <= 300) onWeightPercentChange(next)
+                }}
+                style={{
+                  width: '64px',
+                  padding: '4px 6px',
+                  borderRadius: '6px',
+                  border: '1px solid rgba(255,255,255,0.4)',
+                  background: 'rgba(255,255,255,0.18)',
+                  color: '#fff',
+                  fontWeight: 600,
+                  textAlign: 'center',
+                }}
+              />
+              %
+            </label>
+          )}
+          {rightAction}
+        </div>
+      )}
     </div>
   )
 }

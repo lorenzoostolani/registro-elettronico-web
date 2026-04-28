@@ -9,6 +9,15 @@ import { AverageCircle } from '@/app/components/features/AverageCircle'
 import { Grade, computeAverage, computeGradeNeeded, getAverageColorVsObjective, isValidGrade } from '@/lib/domain/grades/entities'
 import { useSettings } from '@/lib/hooks/useSettings'
 
+
+function formatPeriodLabel(desc: string, pos: number): string {
+  if (desc.toLowerCase() === 'quadrimestre') {
+    if (pos === 1) return '1° Quadrimestre'
+    if (pos === 2) return '2° Quadrimestre'
+  }
+  return desc
+}
+
 export default function VotiPage() {
   const { settings, ready } = useSettings()
   const [grades, setGrades] = useState<Grade[]>([])
@@ -42,7 +51,7 @@ export default function VotiPage() {
 
   const tabs = useMemo(() => [
     { id: 'latest' as const, label: 'Ultimi voti' },
-    ...periods.map(([id, desc]) => ({ id: id as number, label: desc })),
+    ...periods.map(([id, desc]) => ({ id: id as number, label: formatPeriodLabel(desc, id) })),
     { id: 'general' as const, label: 'Generale' },
   ], [periods])
 
@@ -53,8 +62,8 @@ export default function VotiPage() {
   }, [grades, period])
 
   const overallAverage = useMemo(() =>
-    computeAverage(filteredGrades, settings.useWeightedAverage),
-    [filteredGrades, settings.useWeightedAverage]
+    computeAverage(filteredGrades, settings.generalAverageMode),
+    [filteredGrades, settings.generalAverageMode]
   )
 
   const chartData = useMemo(() => {
@@ -82,7 +91,7 @@ export default function VotiPage() {
 
     return [...group.entries()]
       .map(([subjectId, subGrades]) => {
-        const avg = computeAverage(subGrades, settings.useWeightedAverage)
+        const avg = computeAverage(subGrades, settings.generalAverageMode)
         const objective = settings.objectives[String(subjectId)] ?? settings.objective
         return {
           subjectId,
@@ -98,7 +107,7 @@ export default function VotiPage() {
         const bv = b.average ?? -1
         return settings.sortAscending ? av - bv : bv - av
       })
-  }, [grades, filteredGrades, period, periods, settings])
+  }, [grades, filteredGrades, period, periods, settings.generalAverageMode, settings.objective, settings.objectives, settings.sortAscending])
 
   const latestGrades = useMemo(() =>
     [...grades]
