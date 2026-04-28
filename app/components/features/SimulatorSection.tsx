@@ -92,7 +92,7 @@ export function SimulatorSection({
                   fontSize: '14px',
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>
+                    <span style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#fff', color: '#1a1a1a', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>
                       {grade.value % 1 === 0 ? grade.value : grade.value.toFixed(2)}
                     </span>
                     <span style={{ color: 'var(--text-2)', fontSize: '12px' }}>{grade.type}</span>

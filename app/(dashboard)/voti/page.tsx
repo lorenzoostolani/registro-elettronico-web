@@ -9,10 +9,10 @@ import { Grade, computeAverage, computeGradeNeeded, getAverageColorVsObjective, 
 import { useSettings } from '@/lib/hooks/useSettings'
 
 
-function formatPeriodLabel(desc: string, pos: number): string {
+function formatPeriodLabel(desc: string, index: number): string {
   if (desc.toLowerCase() === 'quadrimestre') {
-    if (pos === 1) return '1° Quadrimestre'
-    if (pos === 2) return '2° Quadrimestre'
+    if (index === 0) return '1° Quadrimestre'
+    if (index === 1) return '2° Quadrimestre'
   }
   return desc
 }
@@ -50,7 +50,7 @@ export default function VotiPage() {
 
   const tabs = useMemo(() => [
     { id: 'latest' as const, label: 'Ultimi voti' },
-    ...periods.map(([id, desc]) => ({ id: id as number, label: formatPeriodLabel(desc, id) })),
+    ...periods.map(([id, desc], periodIndex) => ({ id: id as number, label: formatPeriodLabel(desc, periodIndex) })),
     { id: 'general' as const, label: 'Generale' },
   ], [periods])
 

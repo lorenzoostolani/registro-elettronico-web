@@ -13,10 +13,10 @@ import { useLocalGrades } from '@/lib/hooks/useLocalGrades'
 
 const WEIGHTS_KEY = 'rv_grade_weights'
 
-function formatPeriodLabel(desc: string, pos: number): string {
+function formatPeriodLabel(desc: string, index: number): string {
   if (desc.toLowerCase() === 'quadrimestre') {
-    if (pos === 1) return '1° Quadrimestre'
-    if (pos === 2) return '2° Quadrimestre'
+    if (index === 0) return '1° Quadrimestre'
+    if (index === 1) return '2° Quadrimestre'
   }
   return desc
 }
@@ -111,15 +111,20 @@ export default function SubjectDetailPage() {
     [grades, localGrades, period, subjectId]
   )
 
-  const average = computeAverage(effectiveGrades, subjectAverageMode)
+  const gradesWithSimulation = useMemo(
+    () => [...effectiveGrades, ...synthetic],
+    [effectiveGrades, synthetic]
+  )
+
+  const average = computeAverage(gradesWithSimulation, subjectAverageMode)
   const objective = settings.objectives[String(subjectId)] ?? settings.objective
 
   const recalculatedAverage = useMemo(
-    () => computeAverage([...effectiveGrades, ...synthetic], subjectAverageMode),
-    [effectiveGrades, synthetic, subjectAverageMode]
+    () => computeAverage(gradesWithSimulation, subjectAverageMode),
+    [gradesWithSimulation, subjectAverageMode]
   )
 
-  const typeAverage = (type: GradeType) => computeWeightedAverage(effectiveGrades.filter(g => getGradeType(g.componentDesc) === type))
+  const typeAverage = (type: GradeType) => computeWeightedAverage(gradesWithSimulation.filter(g => getGradeType(g.componentDesc) === type))
 
   const progressPercent = Math.min(100, ((average ?? 0) / objective) * 100)
   const progressColor = (average ?? 0) >= objective ? 'var(--green)' : (average ?? 0) >= objective - 1 ? 'var(--amber)' : 'var(--red)'
@@ -140,7 +145,7 @@ export default function SubjectDetailPage() {
 
       {periods.length > 1 && (
         <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' }}>
-          {periods.map(([id, desc]) => (
+          {periods.map(([id, desc], periodIndex) => (
             <button
               key={id}
               onClick={() => setPeriod(id)}
@@ -149,7 +154,7 @@ export default function SubjectDetailPage() {
                 background: period === id ? 'var(--red)' : 'var(--surface)', color: period === id ? '#fff' : 'var(--text-2)',
               }}
             >
-              {formatPeriodLabel(desc, id)}
+              {formatPeriodLabel(desc, periodIndex)}
             </button>
           ))}
         </div>
