@@ -3,6 +3,7 @@ import { request } from 'undici'
 export interface PersistedStorage {
   settings?: unknown
   localGrades?: unknown
+  weightOverrides?: unknown
 }
 
 interface UpstashResult<T> {

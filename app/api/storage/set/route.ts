@@ -14,6 +14,7 @@ export async function POST(request: NextRequest) {
       ...existing,
       ...(body.settings !== undefined ? { settings: body.settings } : {}),
       ...(body.localGrades !== undefined ? { localGrades: body.localGrades } : {}),
+      ...(body.weightOverrides !== undefined ? { weightOverrides: body.weightOverrides } : {}),
     }
 
     await setStorageByStudentId(session.studentId, next)

@@ -10,9 +10,8 @@ import { SimulatorSection } from '@/app/components/features/SimulatorSection'
 import { Grade, GradeType, computeAverage, computeWeightedAverage, getGradeType } from '@/lib/domain/grades/entities'
 import { useSettings } from '@/lib/hooks/useSettings'
 import { useLocalGrades } from '@/lib/hooks/useLocalGrades'
+import { useWeightOverrides } from '@/lib/hooks/useWeightOverrides'
 import { fetchGradesWithAuthGuard } from '@/lib/utils/auth-client'
-
-const WEIGHTS_KEY = 'rv_grade_weights'
 
 export default function SubjectDetailPage() {
   const params = useParams<{ subjectId: string }>()
@@ -23,7 +22,6 @@ export default function SubjectDetailPage() {
   const [allGrades, setAllGrades] = useState<Grade[]>([])
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
-  const [weightOverrides, setWeightOverrides] = useState<Record<string, number>>({})
 
   useEffect(() => {
     fetchGradesWithAuthGuard()
@@ -58,28 +56,7 @@ export default function SubjectDetailPage() {
   )
 
   const weightsStorageKey = `${subjectId}_${selectedPeriod ?? 0}`
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    const raw = window.localStorage.getItem(WEIGHTS_KEY)
-    if (!raw) return
-    try {
-      const parsed = JSON.parse(raw) as Record<string, Record<string, number>>
-      setWeightOverrides(parsed[weightsStorageKey] ?? {})
-    } catch {
-      setWeightOverrides({})
-    }
-  }, [weightsStorageKey])
-
-  const updateWeight = (gradeKey: string, nextPercent: number) => {
-    const next = { ...weightOverrides, [gradeKey]: nextPercent }
-    setWeightOverrides(next)
-    if (typeof window !== 'undefined') {
-      const raw = window.localStorage.getItem(WEIGHTS_KEY)
-      const parsed = raw ? (JSON.parse(raw) as Record<string, Record<string, number>>) : {}
-      parsed[weightsStorageKey] = next
-      window.localStorage.setItem(WEIGHTS_KEY, JSON.stringify(parsed))
-    }
-  }
+  const { overrides: weightOverrides, updateWeight } = useWeightOverrides(weightsStorageKey)
 
   const effectiveGrades = useMemo(
     () => grades.map((g) => ({ ...g, weightFactor: (weightOverrides[String(g.evtId)] ?? g.weightFactor * 100) / 100 })),
