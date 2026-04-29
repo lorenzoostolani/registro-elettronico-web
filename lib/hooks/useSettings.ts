@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { GeneralAverageMode } from '@/lib/domain/grades/entities'
 
 export interface AppSettings {
@@ -73,13 +73,13 @@ export function useSettings() {
     })
   }
 
-  const updateSettings = (partial: Partial<AppSettings>) => {
+  const updateSettings = useCallback((partial: Partial<AppSettings>) => {
     setSettings((prev) => {
       const next = { ...prev, ...partial }
       void persistSettings(next)
       return next
     })
-  }
+  }, [])
 
   const actions = useMemo(
     () => ({
@@ -99,7 +99,7 @@ export function useSettings() {
         updateSettings({ subjectAverageModes: { ...settings.subjectAverageModes, [subjectId]: mode } }),
       setStudentYear: (studentYear: number) => updateSettings({ studentYear }),
     }),
-    [settings.objectives, settings.subjectAverageModes]
+    [settings.objectives, settings.subjectAverageModes, updateSettings]
   )
 
   return { settings, actions, ready }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { LoadingSpinner } from '@/app/components/ui/LoadingSpinner'
 import { ErrorState } from '@/app/components/ui/ErrorState'
@@ -9,7 +9,6 @@ import { AverageCircle } from '@/app/components/features/AverageCircle'
 import { Grade, computeAverage, computeGradeNeeded, getAverageColorVsObjective, isValidGrade } from '@/lib/domain/grades/entities'
 import { useSettings } from '@/lib/hooks/useSettings'
 import { fetchGradesWithAuthGuard } from '@/lib/utils/auth-client'
-import { useState } from 'react'
 
 function formatPeriodLabel(desc: string, index: number): string {
   if (desc.toLowerCase() === 'quadrimestre') {
@@ -20,6 +19,14 @@ function formatPeriodLabel(desc: string, index: number): string {
 }
 
 export default function VotiPage() {
+  return (
+    <Suspense fallback={<LoadingSpinner />}>
+      <VotiPageInner />
+    </Suspense>
+  )
+}
+
+function VotiPageInner() {
   const { settings, ready } = useSettings()
   const [grades, setGrades] = useState<Grade[]>([])
   const [loading, setLoading] = useState(true)
