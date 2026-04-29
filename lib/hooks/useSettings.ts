@@ -21,8 +21,6 @@ const DEFAULT_SETTINGS: AppSettings = {
   studentYear: 3,
 }
 
-const KEY = 'rv_settings'
-
 function clampObjective(value: number): number {
   if (Number.isNaN(value)) return 0
   return Math.min(10, Math.max(0, Number(value.toFixed(1))))
@@ -33,31 +31,52 @@ export function useSettings() {
   const [ready, setReady] = useState(false)
 
   useEffect(() => {
-    if (typeof window === 'undefined') return
-    const raw = window.localStorage.getItem(KEY)
-    if (raw) {
+    let mounted = true
+
+    const load = async () => {
       try {
-        const parsed = JSON.parse(raw) as Partial<AppSettings>
-        setSettings({
-          ...DEFAULT_SETTINGS,
-          ...parsed,
-          objective: clampObjective(parsed.objective ?? DEFAULT_SETTINGS.objective),
-          objectives: parsed.objectives ?? {},
-          subjectAverageModes: parsed.subjectAverageModes ?? {},
-        })
+        const response = await fetch('/api/storage/get', { cache: 'no-store' })
+        if (!response.ok) throw new Error('Storage unavailable')
+        const payload = (await response.json()) as { settings?: Partial<AppSettings> | null }
+        const parsed = payload.settings
+
+        if (!mounted) return
+        if (parsed) {
+          setSettings({
+            ...DEFAULT_SETTINGS,
+            ...parsed,
+            objective: clampObjective(parsed.objective ?? DEFAULT_SETTINGS.objective),
+            objectives: parsed.objectives ?? {},
+            subjectAverageModes: parsed.subjectAverageModes ?? {},
+          })
+        } else {
+          setSettings(DEFAULT_SETTINGS)
+        }
       } catch {
-        setSettings(DEFAULT_SETTINGS)
+        if (mounted) setSettings(DEFAULT_SETTINGS)
+      } finally {
+        if (mounted) setReady(true)
       }
     }
-    setReady(true)
+
+    load()
+    return () => {
+      mounted = false
+    }
   }, [])
+
+  const persistSettings = async (next: AppSettings) => {
+    await fetch('/api/storage/set', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ settings: next }),
+    })
+  }
 
   const updateSettings = (partial: Partial<AppSettings>) => {
     setSettings((prev) => {
       const next = { ...prev, ...partial }
-      if (typeof window !== 'undefined') {
-        window.localStorage.setItem(KEY, JSON.stringify(next))
-      }
+      void persistSettings(next)
       return next
     })
   }

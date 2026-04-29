@@ -12,32 +12,45 @@ export interface LocalGrade {
 
 export type LocalGrades = Record<string, LocalGrade[]>
 
-const KEY = 'rv_local_grades'
-
 export function useLocalGrades(subjectId: string, periodPos: number) {
   const storageKey = `${subjectId}_${periodPos}`
-  const [grades, setGrades] = useState<LocalGrade[]>([])
+  const [allGrades, setAllGrades] = useState<LocalGrades>({})
 
   useEffect(() => {
-    if (typeof window === 'undefined') return
-    const raw = window.localStorage.getItem(KEY)
-    if (!raw) return
-    try {
-      const parsed = JSON.parse(raw) as LocalGrades
-      setGrades(parsed[storageKey] ?? [])
-    } catch {
-      setGrades([])
+    let mounted = true
+
+    const load = async () => {
+      try {
+        const response = await fetch('/api/storage/get', { cache: 'no-store' })
+        if (!response.ok) throw new Error('Storage unavailable')
+        const payload = (await response.json()) as { localGrades?: LocalGrades | null }
+        if (mounted) {
+          setAllGrades(payload.localGrades ?? {})
+        }
+      } catch {
+        if (mounted) setAllGrades({})
+      }
     }
-  }, [storageKey])
+
+    load()
+    return () => {
+      mounted = false
+    }
+  }, [])
 
   const persist = (next: LocalGrade[]) => {
-    setGrades(next)
-    if (typeof window === 'undefined') return
-    const raw = window.localStorage.getItem(KEY)
-    const parsed = raw ? (JSON.parse(raw) as LocalGrades) : {}
-    parsed[storageKey] = next
-    window.localStorage.setItem(KEY, JSON.stringify(parsed))
+    setAllGrades((prev) => {
+      const updated = { ...prev, [storageKey]: next }
+      void fetch('/api/storage/set', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ localGrades: updated }),
+      })
+      return updated
+    })
   }
+
+  const grades = allGrades[storageKey] ?? []
 
   const addGrade = (value: number, type: GradeType, weightPercent: number) => {
     persist([...grades, { value, type, weightPercent, id: crypto.randomUUID() }])
