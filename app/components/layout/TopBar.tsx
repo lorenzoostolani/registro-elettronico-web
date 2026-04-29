@@ -42,18 +42,16 @@ export function TopBar() {
               <polyline points="15 18 9 12 15 6"/>
             </svg>
           </button>
-        ) : (
-          <div style={{
-            width: '28px', height: '28px',
-            background: 'var(--red)', borderRadius: '7px',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-              stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-              <polyline points="9 22 9 12 15 12 15 22"/>
-            </svg>
-          </div>
+          ) : (
+          <svg width="28" height="28" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <rect width="100" height="100" rx="22" fill="#E03030"/>
+            <path d="M28 32 Q40 28 50 32 L50 72 Q40 68 28 72 Z" fill="white" opacity="0.95"/>
+            <path d="M50 32 Q62 28 72 32 L72 72 Q62 68 50 72 Z" fill="white" opacity="0.75"/>
+            <rect x="48.5" y="28" width="3" height="46" rx="1.5" fill="white" opacity="0.5"/>
+            <line x1="32" y1="44" x2="46" y2="42" stroke="#E03030" strokeWidth="3.5" strokeLinecap="round" opacity="0.6"/>
+            <line x1="32" y1="54" x2="46" y2="52" stroke="#E03030" strokeWidth="3.5" strokeLinecap="round" opacity="0.6"/>
+            <line x1="32" y1="64" x2="46" y2="62" stroke="#E03030" strokeWidth="3.5" strokeLinecap="round" opacity="0.6"/>
+          </svg>
         )}
       </div>
 
