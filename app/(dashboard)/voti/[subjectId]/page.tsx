@@ -110,11 +110,16 @@ export default function SubjectDetailPage() {
   if (error) return <ErrorState message={error} />
 
   const subjectName = subjectGrades[0]?.subjectDesc ?? 'Materia'
+  // Build the back URL: return to /voti with the same period tab the user came from.
+  // If selectedPeriod is null (general view), fall back to 'general'.
+  const backHref = selectedPeriod != null
+    ? `/voti?period=${selectedPeriod}`
+    : '/voti?period=general'
 
   return (
     <div style={{ maxWidth: '600px', margin: '0 auto' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
-        <button onClick={() => router.back()} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text)', padding: '4px' }}>
+        <button onClick={() => router.push(backHref)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text)', padding: '4px' }}>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
         <h1 style={{ fontSize: '18px', fontWeight: 700, margin: 0 }}>{subjectName}</h1>

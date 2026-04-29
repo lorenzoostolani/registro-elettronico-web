@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { LoadingSpinner } from '@/app/components/ui/LoadingSpinner'
 import { ErrorState } from '@/app/components/ui/ErrorState'
 import { SubjectRow } from '@/app/components/features/SubjectRow'
@@ -8,7 +9,7 @@ import { AverageCircle } from '@/app/components/features/AverageCircle'
 import { Grade, computeAverage, computeGradeNeeded, getAverageColorVsObjective, isValidGrade } from '@/lib/domain/grades/entities'
 import { useSettings } from '@/lib/hooks/useSettings'
 import { fetchGradesWithAuthGuard } from '@/lib/utils/auth-client'
-
+import { useState } from 'react'
 
 function formatPeriodLabel(desc: string, index: number): string {
   if (desc.toLowerCase() === 'quadrimestre') {
@@ -23,7 +24,22 @@ export default function VotiPage() {
   const [grades, setGrades] = useState<Grade[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [period, setPeriod] = useState<number | 'latest' | 'general'>('latest')
+  const router = useRouter()
+  const searchParams = useSearchParams()
+
+  // Period is stored in the URL: ?period=latest | ?period=general | ?period=<number>
+  // This way router.back() from a subject page always restores the correct tab.
+  const rawPeriod = searchParams.get('period') ?? 'latest'
+  const period: number | 'latest' | 'general' =
+    rawPeriod === 'latest' || rawPeriod === 'general'
+      ? rawPeriod
+      : Number(rawPeriod)
+
+  const setPeriod = (next: number | 'latest' | 'general') => {
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('period', String(next))
+    router.replace(`/voti?${params.toString()}`)
+  }
 
   useEffect(() => {
     fetchGradesWithAuthGuard()
@@ -41,13 +57,6 @@ export default function VotiPage() {
     for (const g of grades) map.set(g.periodPos, g.periodDesc)
     return [...map.entries()].sort((a, b) => a[0] - b[0])
   }, [grades])
-
-  // Set default period to first available
-  useEffect(() => {
-    if (period === 'latest' && periods.length > 0) {
-      // keep latest as default, fine
-    }
-  }, [periods, period])
 
   const tabs = useMemo(() => [
     { id: 'latest' as const, label: 'Ultimi voti' },

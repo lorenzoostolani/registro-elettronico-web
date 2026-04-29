@@ -5,7 +5,6 @@ import { usePathname, useRouter } from 'next/navigation'
 
 const navItems = [
   { href: '/voti', label: 'Voti', icon: <StarIcon /> },
-  { href: '/impostazioni', label: 'Impostazioni', icon: <SettingsIcon /> },
 ]
 
 export function Sidebar() {
@@ -58,7 +57,15 @@ export function Sidebar() {
         })}
       </nav>
 
-      <div style={{ padding: '12px 16px', borderTop: '1px solid var(--border)' }}>
+      <div style={{ padding: '12px 16px', borderTop: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+        <Link href="/impostazioni" style={{
+          display: 'flex', alignItems: 'center', gap: '8px',
+          color: pathname.startsWith('/impostazioni') ? 'var(--text)' : 'var(--text-2)',
+          fontSize: '13px', padding: '6px 0', textDecoration: 'none',
+          fontWeight: pathname.startsWith('/impostazioni') ? 600 : 400,
+        }}>
+          <SettingsIcon /> Impostazioni
+        </Link>
         <button onClick={handleLogout} style={{
           display: 'flex', alignItems: 'center', gap: '8px',
           background: 'none', border: 'none', cursor: 'pointer',

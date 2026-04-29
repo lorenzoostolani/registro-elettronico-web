@@ -1,27 +1,21 @@
-import { MobileNav } from '@/app/components/layout/MobileNav'
 import { Sidebar } from '@/app/components/layout/Sidebar'
+import { TopBar } from '@/app/components/layout/TopBar'
 import { Analytics } from "@vercel/analytics/next"
 import { SpeedInsights } from "@vercel/speed-insights/next"
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <div style={{ display: 'flex', minHeight: '100vh' }}>
-      {/* Sidebar: visible only on md+ via CSS inside the component */}
+      {/* Sidebar: desktop only */}
       <Sidebar />
+      {/* TopBar: mobile only */}
+      <TopBar />
       <Analytics />
       <SpeedInsights />
 
-      {/*
-        Main content:
-        - On desktop (md+): left margin 220px to clear the sidebar, no bottom padding for mobile nav
-        - On mobile: no left margin, bottom padding to clear the bottom nav
-      */}
       <main className="dashboard-main">
         {children}
       </main>
-
-      {/* Bottom nav: visible only on mobile via CSS inside the component */}
-      <MobileNav />
 
       <style>{`
         .dashboard-main {
@@ -29,10 +23,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           width: 100%;
           max-width: 100%;
           overflow-x: clip;
-          padding: 24px 16px 90px; /* bottom clears mobile nav */
+          padding: 72px 16px 32px; /* top clears TopBar on mobile */
           -webkit-overflow-scrolling: touch;
         }
-        @media (min-width: 769px) { /* matches sidebar hide breakpoint */
+        @media (min-width: 769px) {
           .dashboard-main {
             margin-left: 220px;
             padding: 32px;
