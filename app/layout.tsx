@@ -4,7 +4,11 @@ import './globals.css'
 
 export const metadata: Metadata = {
   title: 'Registro Voti',
-  description: 'Web app voti Classeviva'
+  description: 'Web app voti Classeviva',
+  icons: {
+    icon: '/favicon.svg',
+    apple: '/favicon.svg',
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
