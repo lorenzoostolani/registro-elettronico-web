@@ -27,8 +27,8 @@ Il client chiama `GET /api/grades`. La route legge token e studentId dalla sessi
 **4. Elaborazione dati**
 Le funzioni di dominio calcolano media pesata, media per tipologia (scritto/orale/pratico), stato colore rispetto all'obiettivo e voti necessari per raggiungerlo.
 
-**5. Simulazioni e preferenze locali**
-In `localStorage` vengono salvate impostazioni (`rv_settings`), voti simulati (`rv_local_grades`) e override dei pesi. Le simulazioni sono locali al browser e non modificano i dati ufficiali.
+**5. Simulazioni e preferenze**
+Impostazioni, voti simulati e override dei pesi vengono salvati su **Vercel KV (Redis)**, associati all'utente tramite `studentId` di sessione. I dati sono sincronizzati tra dispositivi e persistono tra le sessioni. Le simulazioni non modificano i dati ufficiali.
 
 </details>
 
@@ -60,6 +60,7 @@ In `localStorage` vengono salvate impostazioni (`rv_settings`), voti simulati (`
 | Framework | Next.js 15 (App Router) |
 | Linguaggio | TypeScript |
 | UI | React 19 + Tailwind CSS |
+| Storage | Vercel KV (Upstash Redis) |
 | Grafici | Recharts + componenti custom |
 | API runtime | Next.js Route Handlers (Node + Edge) |
 | Deploy | Vercel |
