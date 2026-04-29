@@ -94,40 +94,6 @@ export default function ImpostazioniPage() {
 
   return (
     <div>
-      {/* Desktop header — TopBar handles mobile */}
-      <div className="impostazioni-desktop-header">
-        <button
-          onClick={() => router.back()}
-          aria-label="Torna indietro"
-          style={{
-            background: 'none', border: 'none', cursor: 'pointer',
-            color: 'var(--text)', padding: '4px',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}
-        >
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="15 18 9 12 15 6"/>
-          </svg>
-        </button>
-        <div>
-          <h1 style={{ fontSize: '22px', fontWeight: 700, margin: 0 }}>Impostazioni</h1>
-          <p style={{ margin: '2px 0 0', fontSize: '13px', color: 'var(--text-2)' }}>Obiettivi, ordinamento e tipo di media</p>
-        </div>
-      </div>
-
-      <style>{`
-        .impostazioni-desktop-header {
-          display: none;
-          align-items: center;
-          gap: 12px;
-          margin-bottom: 24px;
-        }
-        @media (min-width: 769px) {
-          .impostazioni-desktop-header { display: flex; }
-        }
-      `}</style>
-
       <div className="space-y-4">
         <Card>
           <h3 className="font-semibold">Obiettivo generale</h3>
