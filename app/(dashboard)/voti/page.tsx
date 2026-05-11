@@ -79,15 +79,6 @@ function VotiPageInner() {
     return grades.filter(g => g.periodPos === period)
   }, [grades, period])
 
-  const overallAverage = useMemo(() => {
-    if (period === 'latest') return computeAverage(filteredGrades, settings.generalAverageMode)
-    // Use per-subject averages (already include simulated grades and weight overrides)
-    // so the total average reflects the simulator correctly.
-    const validAverages = subjects.map(s => s.average).filter((v): v is number => v !== null)
-    if (validAverages.length === 0) return null
-    return validAverages.reduce((a, b) => a + b, 0) / validAverages.length
-  }, [filteredGrades, subjects, period, settings.generalAverageMode])
-
   const subjects = useMemo(() => {
     const gradesForSubjects = period === 'latest' && periods.length > 0
       ? grades.filter(g => g.periodPos === periods[0][0])
@@ -153,6 +144,15 @@ function VotiPageInner() {
         return settings.sortAscending ? av - bv : bv - av
       })
   }, [grades, filteredGrades, period, periods, settings.generalAverageMode, settings.objective, settings.objectives, settings.sortAscending, settings.subjectAverageModes, allLocalGrades, allWeightOverrides])
+
+  const overallAverage = useMemo(() => {
+    if (period === 'latest') return computeAverage(filteredGrades, settings.generalAverageMode)
+    // Use per-subject averages (already include simulated grades and weight overrides)
+    // so the total average reflects the simulator correctly.
+    const validAverages = subjects.map(s => s.average).filter((v): v is number => v !== null)
+    if (validAverages.length === 0) return null
+    return validAverages.reduce((a, b) => a + b, 0) / validAverages.length
+  }, [filteredGrades, subjects, period, settings.generalAverageMode])
 
   const selectedSubjectPeriod = useMemo(() => {
     if (period === 'latest') return periods[0]?.[0] ?? null
