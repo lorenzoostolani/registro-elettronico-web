@@ -7,6 +7,8 @@ import { ErrorState } from '@/app/components/ui/ErrorState'
 import { SubjectRow } from '@/app/components/features/SubjectRow'
 import { AverageCircle } from '@/app/components/features/AverageCircle'
 import { Grade, computeAverage, computeGradeNeeded, getAverageColorVsObjective, isValidGrade } from '@/lib/domain/grades/entities'
+import { AllWeightOverrides } from '@/lib/hooks/useWeightOverrides'
+import { LocalGrades } from '@/lib/hooks/useLocalGrades'
 import { useSettings } from '@/lib/hooks/useSettings'
 import { fetchGradesWithAuthGuard } from '@/lib/utils/auth-client'
 
@@ -31,6 +33,8 @@ function VotiPageInner() {
   const [grades, setGrades] = useState<Grade[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [weightOverrides, setWeightOverrides] = useState<AllWeightOverrides>({})
+  const [localGrades, setLocalGrades] = useState<LocalGrades>({})
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -49,6 +53,8 @@ function VotiPageInner() {
   }
 
   useEffect(() => {
+    let mounted = true
+
     fetchGradesWithAuthGuard()
       .then(data => {
         if (!data) return
@@ -57,7 +63,63 @@ function VotiPageInner() {
       })
       .catch(() => setError('Errore di rete'))
       .finally(() => setLoading(false))
+
+    fetch('/api/storage/get', { cache: 'no-store' })
+      .then((res) => res.ok ? res.json() : null)
+      .then((payload: { weightOverrides?: AllWeightOverrides | null; localGrades?: LocalGrades | null } | null) => {
+        if (!mounted || !payload) return
+        setWeightOverrides(payload.weightOverrides ?? {})
+        setLocalGrades(payload.localGrades ?? {})
+      })
+      .catch(() => {})
+
+    return () => { mounted = false }
   }, [])
+
+  const gradesWithOverrides = useMemo(() => {
+    const withRealOverrides = grades.map((g) => {
+      const key = `${g.subjectId}_${g.periodPos}`
+      const override = weightOverrides[key]?.[String(g.evtId)]
+      return {
+        ...g,
+        weightFactor: (override ?? g.weightFactor * 100) / 100,
+      }
+    })
+
+    const synthetic: Grade[] = []
+    for (const [storageKey, savedLocalGrades] of Object.entries(localGrades)) {
+      const [subjectIdStr, periodPosStr] = storageKey.split('_')
+      const parsedSubjectId = Number(subjectIdStr)
+      const parsedPeriodPos = Number(periodPosStr)
+      if (!Number.isFinite(parsedSubjectId) || !Number.isFinite(parsedPeriodPos)) continue
+
+      const sampleGrade = grades.find((g) => g.subjectId === parsedSubjectId && g.periodPos === parsedPeriodPos)
+      const periodDesc = sampleGrade?.periodDesc ?? 'Quadrimestre'
+      const subjectDesc = sampleGrade?.subjectDesc ?? `Materia ${parsedSubjectId}`
+
+      savedLocalGrades.forEach((g, idx) => {
+        synthetic.push({
+          subjectId: parsedSubjectId,
+          subjectDesc,
+          evtId: -1000000 - synthetic.length - idx,
+          evtCode: 'LOCAL',
+          evtDate: new Date().toISOString().slice(0, 10),
+          decimalValue: g.value,
+          displayValue: String(g.value),
+          cancelled: false,
+          underlined: false,
+          periodPos: parsedPeriodPos,
+          periodDesc,
+          componentPos: 0,
+          componentDesc: g.type,
+          weightFactor: g.weightPercent / 100,
+          notesForFamily: '',
+        })
+      })
+    }
+
+    return [...withRealOverrides, ...synthetic]
+  }, [grades, localGrades, weightOverrides])
 
   const periods = useMemo(() => {
     const map = new Map<number, string>()
@@ -72,10 +134,10 @@ function VotiPageInner() {
   ], [periods])
 
   const filteredGrades = useMemo(() => {
-    if (period === 'latest') return grades
-    if (period === 'general') return grades
-    return grades.filter(g => g.periodPos === period)
-  }, [grades, period])
+    if (period === 'latest') return gradesWithOverrides
+    if (period === 'general') return gradesWithOverrides
+    return gradesWithOverrides.filter(g => g.periodPos === period)
+  }, [gradesWithOverrides, period])
 
   const overallAverage = useMemo(() =>
     computeAverage(filteredGrades, settings.generalAverageMode),
@@ -84,7 +146,7 @@ function VotiPageInner() {
 
   const subjects = useMemo(() => {
     const gradesForSubjects = period === 'latest' && periods.length > 0
-      ? grades.filter(g => g.periodPos === periods[0][0])
+      ? gradesWithOverrides.filter(g => g.periodPos === periods[0][0])
       : filteredGrades
 
     const group = new Map<number, Grade[]>()
@@ -113,7 +175,7 @@ function VotiPageInner() {
         const bv = b.average ?? -1
         return settings.sortAscending ? av - bv : bv - av
       })
-  }, [grades, filteredGrades, period, periods, settings.generalAverageMode, settings.objective, settings.objectives, settings.sortAscending, settings.subjectAverageModes])
+  }, [filteredGrades, gradesWithOverrides, period, periods, settings.generalAverageMode, settings.objective, settings.objectives, settings.sortAscending, settings.subjectAverageModes])
 
   const selectedSubjectPeriod = useMemo(() => {
     if (period === 'latest') return periods[0]?.[0] ?? null

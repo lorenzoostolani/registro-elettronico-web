@@ -16,13 +16,11 @@ export function SimulatorSection({
   addGrade,
   updateGrade,
   removeGrade,
-  recalculatedAverage,
 }: {
   localGrades: LocalGrade[]
   addGrade: (v: number, type: GradeType, weightPercent: number) => void
   updateGrade: (id: string, patch: Partial<Pick<LocalGrade, 'type' | 'weightPercent'>>) => void
   removeGrade: (id: string) => void
-  recalculatedAverage: number | null
 }) {
   const [value, setValue] = useState('6')
   const [type, setType] = useState<GradeType>('Scritto')
@@ -57,17 +55,10 @@ export function SimulatorSection({
       <div style={{
         padding: '12px 16px',
         borderBottom: '1px solid var(--border)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: '8px',
         background: 'var(--surface-2)',
       }}>
         <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-2)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
           Simulatore voti
-        </span>
-        <span style={{ fontSize: '13px', color: 'var(--text-2)' }}>
-          Media ricalcolata: <strong style={{ color: 'var(--text)' }}>{recalculatedAverage?.toFixed(2) ?? '—'}</strong>
         </span>
       </div>
 
