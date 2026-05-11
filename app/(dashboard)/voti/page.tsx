@@ -8,6 +8,7 @@ import { SubjectRow } from '@/app/components/features/SubjectRow'
 import { AverageCircle } from '@/app/components/features/AverageCircle'
 import { Grade, computeAverage, computeGradeNeeded, getAverageColorVsObjective, isValidGrade } from '@/lib/domain/grades/entities'
 import { useSettings } from '@/lib/hooks/useSettings'
+import { useAllStorageData } from '@/lib/hooks/useAllStorageData'
 import { fetchGradesWithAuthGuard } from '@/lib/utils/auth-client'
 
 function formatPeriodLabel(desc: string, index: number): string {
@@ -28,6 +29,7 @@ export default function VotiPage() {
 
 function VotiPageInner() {
   const { settings, ready } = useSettings()
+  const { localGrades: allLocalGrades, weightOverrides: allWeightOverrides } = useAllStorageData()
   const [grades, setGrades] = useState<Grade[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -77,10 +79,14 @@ function VotiPageInner() {
     return grades.filter(g => g.periodPos === period)
   }, [grades, period])
 
-  const overallAverage = useMemo(() =>
-    computeAverage(filteredGrades, settings.generalAverageMode),
-    [filteredGrades, settings.generalAverageMode]
-  )
+  const overallAverage = useMemo(() => {
+    if (period === 'latest') return computeAverage(filteredGrades, settings.generalAverageMode)
+    // Use per-subject averages (already include simulated grades and weight overrides)
+    // so the total average reflects the simulator correctly.
+    const validAverages = subjects.map(s => s.average).filter((v): v is number => v !== null)
+    if (validAverages.length === 0) return null
+    return validAverages.reduce((a, b) => a + b, 0) / validAverages.length
+  }, [filteredGrades, subjects, period, settings.generalAverageMode])
 
   const subjects = useMemo(() => {
     const gradesForSubjects = period === 'latest' && periods.length > 0
@@ -96,15 +102,48 @@ function VotiPageInner() {
 
     return [...group.entries()]
       .map(([subjectId, subGrades]) => {
+        // Determine the period for this view
+        const periodPos = period === 'latest' ? (periods[0]?.[0] ?? 0) : (typeof period === 'number' ? period : 0)
+        const storageKey = `${subjectId}_${periodPos}`
+
+        // Apply weight overrides to real grades
+        const weightMap = allWeightOverrides[storageKey] ?? {}
+        const effectiveGrades = subGrades.map(g => ({
+          ...g,
+          weightFactor: (weightMap[String(g.evtId)] ?? g.weightFactor * 100) / 100,
+        }))
+
+        // Build synthetic grades from localGrades
+        const localList = allLocalGrades[storageKey] ?? []
+        const syntheticGrades: Grade[] = localList.map((lg, idx) => ({
+          subjectId,
+          subjectDesc: subGrades[0].subjectDesc,
+          evtId: -1000 - idx,
+          evtCode: 'LOCAL',
+          evtDate: new Date().toISOString().slice(0, 10),
+          decimalValue: lg.value,
+          displayValue: String(lg.value),
+          cancelled: false,
+          underlined: false,
+          periodPos,
+          periodDesc: subGrades[0].periodDesc,
+          componentPos: 0,
+          componentDesc: lg.type,
+          weightFactor: lg.weightPercent / 100,
+          notesForFamily: '',
+        }))
+
+        const allSubjectGrades = [...effectiveGrades, ...syntheticGrades]
+
         const avgMode = settings.subjectAverageModes[String(subjectId)] ?? settings.generalAverageMode
-        const avg = computeAverage(subGrades, avgMode)
+        const avg = computeAverage(allSubjectGrades, avgMode)
         const objective = settings.objectives[String(subjectId)] ?? settings.objective
         return {
           subjectId,
           subjectDesc: subGrades[0].subjectDesc,
           average: avg,
           objective,
-          gradeNeeded: computeGradeNeeded(objective, avg ?? Number.NaN, subGrades.filter(isValidGrade).length),
+          gradeNeeded: computeGradeNeeded(objective, avg ?? Number.NaN, allSubjectGrades.filter(isValidGrade).length),
           averageVariant: getAverageColorVsObjective(avg, objective),
         }
       })
@@ -113,7 +152,7 @@ function VotiPageInner() {
         const bv = b.average ?? -1
         return settings.sortAscending ? av - bv : bv - av
       })
-  }, [grades, filteredGrades, period, periods, settings.generalAverageMode, settings.objective, settings.objectives, settings.sortAscending, settings.subjectAverageModes])
+  }, [grades, filteredGrades, period, periods, settings.generalAverageMode, settings.objective, settings.objectives, settings.sortAscending, settings.subjectAverageModes, allLocalGrades, allWeightOverrides])
 
   const selectedSubjectPeriod = useMemo(() => {
     if (period === 'latest') return periods[0]?.[0] ?? null

@@ -147,7 +147,6 @@ export default function SubjectDetailPage() {
           addGrade={addGrade}
           updateGrade={updateGrade}
           removeGrade={removeGrade}
-          recalculatedAverage={recalculatedAverage}
         />
       </div>
 

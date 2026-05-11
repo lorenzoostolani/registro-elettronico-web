@@ -12,6 +12,7 @@ export async function GET() {
     return NextResponse.json({
       settings: data?.settings ?? null,
       localGrades: data?.localGrades ?? null,
+      weightOverrides: data?.weightOverrides ?? null,
     })
   } catch (error) {
     console.error('[API Storage/Get] Failed:', error)
