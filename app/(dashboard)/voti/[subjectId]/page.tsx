@@ -96,11 +96,6 @@ export default function SubjectDetailPage() {
   const average = computeAverage(gradesWithSimulation, subjectAverageMode)
   const objective = settings.objectives[String(subjectId)] ?? settings.objective
 
-  const recalculatedAverage = useMemo(
-    () => computeAverage(gradesWithSimulation, subjectAverageMode),
-    [gradesWithSimulation, subjectAverageMode]
-  )
-
   const typeAverage = (type: GradeType) => computeWeightedAverage(gradesWithSimulation.filter(g => getGradeType(g.componentDesc) === type))
 
   const progressPercent = Math.min(100, ((average ?? 0) / objective) * 100)
@@ -147,7 +142,6 @@ export default function SubjectDetailPage() {
           addGrade={addGrade}
           updateGrade={updateGrade}
           removeGrade={removeGrade}
-          recalculatedAverage={recalculatedAverage}
         />
       </div>
 
